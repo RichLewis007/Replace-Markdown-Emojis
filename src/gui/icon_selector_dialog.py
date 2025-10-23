@@ -23,6 +23,21 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.constants import (
+    API_TIMEOUT_SECONDS,
+    DEFAULT_ICON_SIZE,
+    DEFAULT_SEARCH_LIMIT,
+    DEFAULT_WINDOW_HEIGHT,
+    DEFAULT_WINDOW_WIDTH,
+    FONT_SIZE_SMALL,
+    ICON_BUTTON_HEIGHT,
+    ICON_BUTTON_SIZE,
+    ICON_DISPLAY_SIZE,
+    ICON_GRID_COLUMNS,
+    ICON_GRID_SPACING,
+    MAX_DISPLAY_NAME_LENGTH,
+    THUMBNAIL_SIZE,
+)
 from src.icon_library_manager import IconLibraryManager, IconMetadata
 
 
@@ -32,7 +47,9 @@ class IconDownloadWorker(QThread):
     finished = Signal(Path)
     error = Signal(str)
 
-    def __init__(self, manager: IconLibraryManager, library: str, icon_name: str, size: int = 64):
+    def __init__(
+        self, manager: IconLibraryManager, library: str, icon_name: str, size: int = THUMBNAIL_SIZE
+    ):
         super().__init__()
         self.manager = manager
         self.library = library
@@ -57,7 +74,7 @@ class IconButton(QPushButton):
     def __init__(self, metadata: IconMetadata, parent=None):
         super().__init__(parent)
         self.metadata = metadata
-        self.setFixedSize(80, 100)
+        self.setFixedSize(ICON_BUTTON_SIZE, ICON_BUTTON_HEIGHT)
         self.setToolTip(f"{metadata.name}\n{metadata.library}\n{metadata.license}")
 
         # Set up layout
@@ -66,7 +83,7 @@ class IconButton(QPushButton):
 
         # Icon placeholder
         self.icon_label = QLabel()
-        self.icon_label.setFixedSize(64, 64)
+        self.icon_label.setFixedSize(ICON_DISPLAY_SIZE, ICON_DISPLAY_SIZE)
         self.icon_label.setScaledContents(True)
         self.icon_label.setAlignment(Qt.AlignCenter)
         self.icon_label.setStyleSheet(
@@ -77,9 +94,14 @@ class IconButton(QPushButton):
         # Icon name
         name_parts = metadata.name.split(":")
         display_name = name_parts[-1] if len(name_parts) > 1 else metadata.name
-        name_label = QLabel(display_name[:10] + "..." if len(display_name) > 10 else display_name)
+        truncated_name = (
+            display_name[:MAX_DISPLAY_NAME_LENGTH] + "..."
+            if len(display_name) > MAX_DISPLAY_NAME_LENGTH
+            else display_name
+        )
+        name_label = QLabel(truncated_name)
         name_label.setAlignment(Qt.AlignCenter)
-        name_label.setStyleSheet("font-size: 9px;")
+        name_label.setStyleSheet(f"font-size: {FONT_SIZE_SMALL}px;")
         layout.addWidget(name_label)
 
         self.setLayout(layout)
@@ -95,7 +117,7 @@ class IconButton(QPushButton):
         if icon_path.suffix == ".svg":
             # Load SVG
             renderer = QSvgRenderer(str(icon_path))
-            pixmap = QPixmap(64, 64)
+            pixmap = QPixmap(ICON_DISPLAY_SIZE, ICON_DISPLAY_SIZE)
             pixmap.fill(Qt.transparent)
             from PySide6.QtGui import QPainter
 
@@ -107,7 +129,9 @@ class IconButton(QPushButton):
             # Load raster image
             pixmap = QPixmap(str(icon_path))
             self.icon_label.setPixmap(
-                pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                pixmap.scaled(
+                    ICON_DISPLAY_SIZE, ICON_DISPLAY_SIZE, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                )
             )
 
 
@@ -122,7 +146,7 @@ class IconSelectorDialog(QDialog):
         self.selected_icon: tuple[str, IconMetadata] | None = None
 
         self.setWindowTitle("Select Icon")
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT)
 
         self.setup_ui()
 
@@ -209,11 +233,11 @@ class IconSelectorDialog(QDialog):
 
         # Search
         if selected_lib == "All Libraries":
-            results = self.manager.search_all_libraries(query, limit_per_library=20)
+            results = self.manager.search_all_libraries(query, limit_per_library=DEFAULT_SEARCH_LIMIT // 2)
         else:
             lib_key = selected_lib.lower().replace(" ", "-")
             if lib_key in self.manager.libraries:
-                results = {lib_key: self.manager.libraries[lib_key].search_icons(query, limit=50)}
+                results = {lib_key: self.manager.libraries[lib_key].search_icons(query, limit=DEFAULT_SEARCH_LIMIT)}
             else:
                 results = {}
 
@@ -226,7 +250,7 @@ class IconSelectorDialog(QDialog):
         self.results_label.setText(f"Found {total_results} icons for '{query}'")
 
         row, col = 0, 0
-        max_cols = 8
+        max_cols = ICON_GRID_COLUMNS
 
         for library_name, icons in results.items():
             for icon_meta in icons:
@@ -281,7 +305,7 @@ class IconSelectorDialog(QDialog):
 
         # Create worker thread
         self.download_worker = IconDownloadWorker(
-            self.manager, library_name, metadata.name, size=128
+            self.manager, library_name, metadata.name, size=DEFAULT_ICON_SIZE
         )
 
         def on_finished(path: Path) -> None:

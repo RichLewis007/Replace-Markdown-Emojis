@@ -12,6 +12,13 @@ from pathlib import Path
 import requests
 from PIL import Image
 
+from src.constants import (
+    API_TIMEOUT_SECONDS,
+    DEFAULT_SEARCH_LIMIT,
+    ICONIFY_BASE_URL,
+    SIMPLE_ICONS_CDN_URL,
+)
+
 
 @dataclass
 class IconMetadata:
@@ -48,7 +55,7 @@ class IconLibrary(ABC):
         pass
 
     @abstractmethod
-    def search_icons(self, query: str, limit: int = 50) -> list[IconMetadata]:
+    def search_icons(self, query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[IconMetadata]:
         """Search for icons matching the query.
 
         Args:
@@ -138,13 +145,13 @@ class IconifyLibrary(IconLibrary):
     API Docs: https://iconify.design/docs/api/
     """
 
-    BASE_URL = "https://api.iconify.design"
+    BASE_URL = ICONIFY_BASE_URL
 
     def get_library_name(self) -> str:
         """Get the library name."""
         return "Iconify"
 
-    def search_icons(self, query: str, limit: int = 50) -> list[IconMetadata]:
+    def search_icons(self, query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[IconMetadata]:
         """Search for icons using Iconify's search API.
 
         Args:
@@ -159,7 +166,7 @@ class IconifyLibrary(IconLibrary):
         params = {"query": query, "limit": limit, "prefixes": ""}
 
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=API_TIMEOUT_SECONDS)
             response.raise_for_status()
             data = response.json()
 
@@ -213,7 +220,7 @@ class IconifyLibrary(IconLibrary):
             url += f"?height={size}"
 
         try:
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, timeout=API_TIMEOUT_SECONDS)
             response.raise_for_status()
 
             # Save to cache
@@ -249,13 +256,13 @@ class SimpleIconsLibrary(IconLibrary):
     Docs: https://github.com/simple-icons/simple-icons
     """
 
-    CDN_URL = "https://cdn.simpleicons.org"
+    CDN_URL = SIMPLE_ICONS_CDN_URL
 
     def get_library_name(self) -> str:
         """Get the library name."""
         return "Simple Icons"
 
-    def search_icons(self, query: str, limit: int = 50) -> list[IconMetadata]:
+    def search_icons(self, query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[IconMetadata]:
         """Search for brand icons.
 
         Args:
@@ -323,7 +330,7 @@ class SimpleIconsLibrary(IconLibrary):
         url = f"{self.CDN_URL}/{icon_name}"
 
         try:
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, timeout=API_TIMEOUT_SECONDS)
             response.raise_for_status()
 
             # Save to cache
@@ -368,7 +375,7 @@ class IconLibraryManager:
         }
 
     def search_all_libraries(
-        self, query: str, limit_per_library: int = 20
+        self, query: str, limit_per_library: int = DEFAULT_SEARCH_LIMIT // 2
     ) -> dict[str, list[IconMetadata]]:
         """Search across all icon libraries.
 
