@@ -2,6 +2,8 @@
 """
 Development helper script for the replace-markdown-emojis project.
 This script provides common development tasks using uv.
+
+Author: Rich Lewis
 """
 
 import subprocess

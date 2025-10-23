@@ -3,6 +3,8 @@
 Replace Markdown Emojis - Main application entry point.
 
 A desktop application to replace Unicode emojis in markdown files with professional icons.
+
+Author: Rich Lewis
 """
 
 import sys

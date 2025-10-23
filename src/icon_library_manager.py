@@ -1,4 +1,7 @@
-"""Icon library management system for downloading and caching icons from various sources."""
+"""Icon library management system for downloading and caching icons from various sources.
+
+Author: Rich Lewis
+"""
 
 import json
 import shutil

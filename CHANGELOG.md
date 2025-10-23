@@ -173,7 +173,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Import organization needs refinement in some modules
 
 ### 🔧 Technical Debt
-- Legacy type annotations need modernization (`List` → `list`)
 - Some magic numbers should be constants
 - Exception handling could be more specific
 - Import statements need reorganization
@@ -248,12 +247,12 @@ python dev.py test
 
 ## Acknowledgments
 
+- **Rich Lewis** - Project author and maintainer
 - **Python Community** - For excellent development tools and practices
 - **Qt/PySide6** - For robust GUI framework
 - **uv** - For fast, modern Python package management
 - **Ruff** - For lightning-fast linting
 - **pytest** - For comprehensive testing framework
-- **All contributors** - For making this project possible
 
 ---
 

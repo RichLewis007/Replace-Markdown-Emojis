@@ -1,4 +1,7 @@
-"""Icon selector dialog with grid view and search."""
+"""Icon selector dialog with grid view and search.
+
+Author: Rich Lewis
+"""
 
 from pathlib import Path
 

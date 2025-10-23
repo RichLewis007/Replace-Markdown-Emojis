@@ -2,7 +2,7 @@
 name = "replace-markdown-emojis"
 version = "1.1.0"
 description = "Replace Unicode emojis in markdown files with professional icon images"
-authors = [{name = "Rich"}]
+authors = [{name = "Rich Lewis", email = "1149213+RichLewis007@users.noreply.github.com"}]
 requires-python = ">=3.11"
 dependencies = [
     "PySide6>=6.6.0,<6.10.0",

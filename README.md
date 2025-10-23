@@ -403,4 +403,5 @@ For questions or feedback, please open an issue on GitHub.
 
 ---
 
+**Author:** Rich Lewis  
 Made with ❤️ using Python and PySide6
