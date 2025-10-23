@@ -1,6 +1,7 @@
 # local only files
 docs/
 notes.md
+TODO.md
 
 # Python
 __pycache__/
