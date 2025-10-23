@@ -1,3 +1,7 @@
+# local project specific
+docs/
+notes.md
+
 # Python
 __pycache__/
 *.py[cod]
