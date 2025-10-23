@@ -1,8 +1,10 @@
 """Main application window."""
 
+# Standard library
 import sys
 from pathlib import Path
 
+# Third-party
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QFont
 from PySide6.QtWidgets import (
@@ -21,13 +23,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-# Import our modules
+# Local imports
 from database import EmojiDatabase
 from emoji_detector import EmojiDetector
 from file_operations import IconFileManager, MarkdownFileHandler
 from initialize_emoji_db import initialize_database
 from matcher import DuplicateDetectionManager, EmojiMatcher
-
 from src.exceptions import DatabaseError, FileOperationError, IconDownloadError
 
 

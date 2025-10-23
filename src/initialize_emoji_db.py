@@ -1,5 +1,6 @@
 """Database initialization script with 200+ curated emoji entries."""
 
+# Local imports
 from database import EmojiDatabase
 
 

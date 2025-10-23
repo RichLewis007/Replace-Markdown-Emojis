@@ -1,8 +1,10 @@
 """File operations for reading, writing, and modifying markdown files."""
 
+# Standard library
 import shutil
 from pathlib import Path
 
+# Local imports
 from src.exceptions import FileBackupError, FileOperationError, FileReadError, FileWriteError
 
 

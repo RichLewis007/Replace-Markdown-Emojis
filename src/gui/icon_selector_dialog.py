@@ -3,8 +3,10 @@
 Author: Rich Lewis
 """
 
+# Standard library
 from pathlib import Path
 
+# Third-party
 from PySide6.QtCore import QSize, Qt, QThread, Signal
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtSvg import QSvgRenderer
@@ -23,6 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+# Local imports
 from src.constants import (
     API_TIMEOUT_SECONDS,
     DEFAULT_ICON_SIZE,

@@ -1,5 +1,6 @@
 """Database editor dialog for managing emoji mappings."""
 
+# Third-party
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
@@ -16,6 +17,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+# Local imports
 from database import EmojiDatabase
 
 

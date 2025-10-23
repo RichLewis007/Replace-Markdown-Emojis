@@ -1,8 +1,10 @@
 """Emoji detection and context extraction module."""
 
+# Standard library
 import re
 from dataclasses import dataclass
 
+# Third-party
 import emoji as emoji_lib
 
 

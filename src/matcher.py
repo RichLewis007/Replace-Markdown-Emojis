@@ -1,9 +1,12 @@
 """Emoji-to-icon matching algorithm with fuzzy matching and duplicate detection."""
 
+# Standard library
 from dataclasses import dataclass
 
+# Third-party
 from fuzzywuzzy import fuzz
 
+# Local imports
 from database import EmojiDatabase
 from emoji_detector import EmojiDetector, EmojiOccurrence
 

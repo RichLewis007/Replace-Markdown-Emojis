@@ -3,15 +3,18 @@
 Author: Rich Lewis
 """
 
+# Standard library
 import json
 import shutil
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 
+# Third-party
 import requests
 from PIL import Image
 
+# Local imports
 from src.constants import (
     API_TIMEOUT_SECONDS,
     DEFAULT_SEARCH_LIMIT,

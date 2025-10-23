@@ -1,10 +1,12 @@
 """Database module for managing emoji-to-keyword mappings and session tracking."""
 
+# Standard library
 import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
 
+# Local imports
 from src.exceptions import (
     DatabaseConnectionError,
     DatabaseError,
