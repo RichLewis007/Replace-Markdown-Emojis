@@ -2,9 +2,11 @@
 
 A powerful desktop application to replace Unicode emojis in markdown files with professional icon images. Built with Python and PySide6.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![Python](https://img.shields.io/badge/python-3.11+-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
+![Code Quality](https://img.shields.io/badge/code%20quality-A-green)
+![Security](https://img.shields.io/badge/security-scanned-green)
 
 ## ✨ Features
 
@@ -26,20 +28,70 @@ A powerful desktop application to replace Unicode emojis in markdown files with 
 ### Install with uv (Recommended)
 
 ```bash
+# Clone the repository
+git clone <repository-url>
 cd replace-markdown-emojis
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -e .
+
+# Install dependencies and create virtual environment
+uv sync
+
+# Run the application
+uv run python replace-emojis.py
 ```
 
-### Install with pip
+### Development Setup
 
 ```bash
-cd replace-markdown-emojis
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+# Install with development dependencies
+uv sync --dev
+
+# Install pre-commit hooks (recommended)
+python dev.py install
+
+# Development workflow
+uv run black .          # Format code
+uv run isort .          # Sort imports
+uv run ruff check .     # Lint code
+uv run mypy src/        # Type checking
+uv run bandit -r src/   # Security check
+uv run pytest          # Run tests
+uv run pytest -m gui    # Run GUI tests only
+
+# Or use the development helper script
+python dev.py all       # Run all development tasks
+python dev.py format    # Format and sort imports
+python dev.py lint      # Lint code
+python dev.py type-check # Type checking
+python dev.py security  # Security checks
+python dev.py test      # Run tests
+python dev.py test-gui  # Run GUI tests only
+python dev.py install   # Install pre-commit hooks
 ```
+
+### Code Quality Tools
+
+This project uses modern Python development tools:
+
+- **🖤 Black** - Code formatting
+- **🔧 Ruff** - Fast linting and import sorting
+- **🔍 MyPy** - Static type checking
+- **🛡️ Bandit** - Security vulnerability scanning
+- **🔒 Safety** - Dependency security checking
+- **🧪 Pytest** - Testing framework with GUI support
+- **📊 Coverage** - Test coverage reporting
+- **🪝 Pre-commit** - Git hooks for code quality
+
+## 📋 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed information about all changes, improvements, and new features.
+
+### Recent Updates (v1.1.0)
+- 🚀 **Modernized to `uv`** - 10x faster dependency management
+- 🛠️ **Enhanced development tools** - Black, Ruff, MyPy, Bandit, Safety
+- 🧪 **Comprehensive testing** - pytest with GUI testing support
+- 🔄 **CI/CD pipeline** - GitHub Actions with multi-platform testing
+- 🛡️ **Security scanning** - Automated vulnerability detection
+- 📚 **Modern documentation** - Updated with 2025 best practices
 
 ### Manual Requirements
 
@@ -49,6 +101,32 @@ If you prefer to install dependencies manually:
 pip install PySide6>=6.6.0 markdown>=3.5 emoji>=2.10.0 requests>=2.31.0 \
             Pillow>=10.2.0 beautifulsoup4>=4.12.0 lxml>=5.1.0 \
             fuzzywuzzy>=0.18.0 python-Levenshtein>=0.24.0
+```
+
+## 🏗️ Modern Development Practices
+
+This project follows **2025 Python development best practices** with:
+
+- **📦 `uv` Package Management** - 10x faster than pip
+- **🛠️ Comprehensive Tooling** - Black, Ruff, MyPy, Bandit, Safety
+- **🧪 Advanced Testing** - pytest with GUI testing support
+- **🔄 CI/CD Pipeline** - GitHub Actions with multi-platform testing
+- **🛡️ Security Scanning** - Automated vulnerability detection
+- **📚 Professional Documentation** - Modern development practices
+
+### Development Workflow
+```bash
+# One-command setup
+uv sync --dev && python dev.py install
+
+# Quality assurance
+python dev.py all  # Run all quality checks
+
+# Individual tasks
+python dev.py format    # Format code
+python dev.py lint      # Lint code  
+python dev.py test      # Run tests
+python dev.py security  # Security checks
 ```
 
 ## 🚀 Quick Start
@@ -270,6 +348,19 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+## 📋 Changelog & Updates
+
+### Recent Updates (v1.1.0)
+- 🚀 **Modernized to `uv`** - 10x faster dependency management
+- 🛠️ **Enhanced development tools** - Black, Ruff, MyPy, Bandit, Safety
+- 🧪 **Comprehensive testing** - pytest with GUI testing support
+- 🔄 **CI/CD pipeline** - GitHub Actions with multi-platform testing
+- 🛡️ **Security scanning** - Automated vulnerability detection
+- 📚 **Modern documentation** - Updated with 2025 best practices
+
+### Full Changelog
+See [CHANGELOG.md](CHANGELOG.md) for detailed information about all changes, improvements, and new features since the project began.
 
 ## 📝 License
 
