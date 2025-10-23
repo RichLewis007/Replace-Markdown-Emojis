@@ -1,3 +1,7 @@
+# local only files
+docs/
+notes.md
+
 # Python
 __pycache__/
 *.py[cod]
