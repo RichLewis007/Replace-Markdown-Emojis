@@ -38,6 +38,7 @@ from src.constants import (
     MAX_DISPLAY_NAME_LENGTH,
     THUMBNAIL_SIZE,
 )
+from src.exceptions import IconDownloadError, IconSearchError
 from src.icon_library_manager import IconLibraryManager, IconMetadata
 
 
@@ -64,8 +65,10 @@ class IconDownloadWorker(QThread):
                 self.finished.emit(path)
             else:
                 self.error.emit("Failed to download icon")
+        except IconDownloadError as e:
+            self.error.emit(f"Download error: {e}")
         except Exception as e:
-            self.error.emit(str(e))
+            self.error.emit(f"Unexpected error: {e}")
 
 
 class IconButton(QPushButton):

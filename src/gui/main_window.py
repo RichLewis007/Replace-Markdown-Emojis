@@ -28,6 +28,8 @@ from file_operations import IconFileManager, MarkdownFileHandler
 from initialize_emoji_db import initialize_database
 from matcher import DuplicateDetectionManager, EmojiMatcher
 
+from src.exceptions import DatabaseError, FileOperationError, IconDownloadError
+
 
 class EmojiCard(QFrame):
     """Widget representing a detected emoji with its context."""
@@ -148,8 +150,19 @@ class MainWindow(QMainWindow):
             self.matcher = EmojiMatcher(self.db)
             self.duplicate_manager = DuplicateDetectionManager(self.db, self.matcher)
 
+        except DatabaseError as e:
+            QMessageBox.critical(
+                self,
+                "Database Error",
+                f"Database initialization failed: {e}\n\nDetails: {e.details or 'No additional details available'}",
+            )
+            sys.exit(1)
         except Exception as e:
-            QMessageBox.critical(self, "Database Error", f"Failed to initialize database: {e}")
+            QMessageBox.critical(
+                self,
+                "Unexpected Error",
+                f"Unexpected error during initialization: {e}",
+            )
             sys.exit(1)
 
     def setup_ui(self):
@@ -283,8 +296,18 @@ class MainWindow(QMainWindow):
 
                 self.statusBar().showMessage(f"Loaded: {file_path}")
 
+            except FileOperationError as e:
+                QMessageBox.critical(
+                    self,
+                    "File Error",
+                    f"Failed to open file: {e}\n\nFile: {e.file_path or 'Unknown'}\nDetails: {e.details or 'No additional details'}",
+                )
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to open file: {e}")
+                QMessageBox.critical(
+                    self,
+                    "Unexpected Error",
+                    f"Unexpected error opening file: {e}",
+                )
 
     def detect_emojis(self, content: str):
         """Detect emojis in the content and display them.
@@ -455,8 +478,18 @@ class MainWindow(QMainWindow):
                 f"File saved successfully!\nBackup created: {self.current_file}.bak",
             )
             self.statusBar().showMessage("File saved with backup")
+        except FileOperationError as e:
+            QMessageBox.critical(
+                self,
+                "File Error",
+                f"Failed to save file: {e}\n\nFile: {e.file_path or 'Unknown'}\nDetails: {e.details or 'No additional details'}",
+            )
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save file: {e}")
+            QMessageBox.critical(
+                self,
+                "Unexpected Error",
+                f"Unexpected error saving file: {e}",
+            )
 
     def show_database_editor(self):
         """Show the database editor dialog."""

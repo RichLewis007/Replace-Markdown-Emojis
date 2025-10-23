@@ -3,6 +3,8 @@
 import shutil
 from pathlib import Path
 
+from src.exceptions import FileBackupError, FileOperationError, FileReadError, FileWriteError
+
 
 class MarkdownFileHandler:
     """Handles markdown file operations including backup and replacement."""
@@ -38,8 +40,30 @@ class MarkdownFileHandler:
             self.original_content = content
             self.modified_content = content
             return content
+        except FileNotFoundError as e:
+            raise FileReadError(
+                f"File not found: {file_path}",
+                file_path=str(file_path),
+                details=str(e),
+            ) from e
+        except PermissionError as e:
+            raise FileReadError(
+                f"Permission denied reading file: {file_path}",
+                file_path=str(file_path),
+                details=str(e),
+            ) from e
+        except UnicodeDecodeError as e:
+            raise FileReadError(
+                f"Unable to decode file as UTF-8: {file_path}",
+                file_path=str(file_path),
+                details=str(e),
+            ) from e
         except Exception as e:
-            raise OSError(f"Error reading file: {e}")
+            raise FileReadError(
+                f"Unexpected error reading file: {e}",
+                file_path=str(file_path),
+                details=str(e),
+            ) from e
 
     def replace_emoji_with_icon(self, emoji: str, icon_path: str, alt_text: str = None) -> int:
         """Replace all occurrences of an emoji with markdown image syntax.
@@ -144,8 +168,24 @@ class MarkdownFileHandler:
                 f.write(self.modified_content)
 
             return True
+        except PermissionError as e:
+            raise FileWriteError(
+                f"Permission denied writing file: {file_path}",
+                file_path=str(file_path),
+                details=str(e),
+            ) from e
+        except OSError as e:
+            raise FileWriteError(
+                f"OS error writing file: {e}",
+                file_path=str(file_path),
+                details=str(e),
+            ) from e
         except Exception as e:
-            raise OSError(f"Error writing file: {e}")
+            raise FileWriteError(
+                f"Unexpected error writing file: {e}",
+                file_path=str(file_path),
+                details=str(e),
+            ) from e
 
     def has_unsaved_changes(self) -> bool:
         """Check if there are unsaved changes.
@@ -262,8 +302,30 @@ class IconFileManager:
         try:
             shutil.copy2(source, dest)
             return str(dest)
+        except FileNotFoundError as e:
+            raise FileBackupError(
+                f"Source file not found: {source}",
+                file_path=str(source),
+                details=str(e),
+            ) from e
+        except PermissionError as e:
+            raise FileBackupError(
+                f"Permission denied copying file: {source}",
+                file_path=str(source),
+                details=str(e),
+            ) from e
+        except OSError as e:
+            raise FileBackupError(
+                f"OS error copying file: {e}",
+                file_path=str(source),
+                details=str(e),
+            ) from e
         except Exception as e:
-            raise OSError(f"Error copying icon: {e}")
+            raise FileBackupError(
+                f"Unexpected error copying file: {e}",
+                file_path=str(source),
+                details=str(e),
+            ) from e
 
     def list_icons(self) -> list[str]:
         """List all icons in the managed directory.

@@ -5,6 +5,13 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
+from src.exceptions import (
+    DatabaseConnectionError,
+    DatabaseError,
+    DatabaseQueryError,
+    ValidationError,
+)
+
 
 class EmojiDatabase:
     """Manages the SQLite database for emoji mappings and session tracking."""
@@ -130,8 +137,14 @@ class EmojiDatabase:
             )
             self.conn.commit()
             return True
+        except sqlite3.IntegrityError as e:
+            print(f"Database integrity error adding emoji: {e}")
+            return False
+        except sqlite3.OperationalError as e:
+            print(f"Database operation error adding emoji: {e}")
+            return False
         except Exception as e:
-            print(f"Error adding emoji: {e}")
+            print(f"Unexpected error adding emoji: {e}")
             return False
 
     def search_emojis_by_keywords(self, search_terms: list[str], limit: int = 10) -> list[dict]:
@@ -217,8 +230,14 @@ class EmojiDatabase:
             )
             self.conn.commit()
             return True
+        except sqlite3.IntegrityError as e:
+            print(f"Database integrity error updating emoji keywords: {e}")
+            return False
+        except sqlite3.OperationalError as e:
+            print(f"Database operation error updating emoji keywords: {e}")
+            return False
         except Exception as e:
-            print(f"Error updating emoji keywords: {e}")
+            print(f"Unexpected error updating emoji keywords: {e}")
             return False
 
     def delete_emoji(self, unicode: str) -> bool:
@@ -235,8 +254,14 @@ class EmojiDatabase:
             cursor.execute("DELETE FROM emojis WHERE unicode = ?", (unicode,))
             self.conn.commit()
             return True
+        except sqlite3.IntegrityError as e:
+            print(f"Database integrity error deleting emoji: {e}")
+            return False
+        except sqlite3.OperationalError as e:
+            print(f"Database operation error deleting emoji: {e}")
+            return False
         except Exception as e:
-            print(f"Error deleting emoji: {e}")
+            print(f"Unexpected error deleting emoji: {e}")
             return False
 
     def increment_emoji_usage(self, unicode: str):

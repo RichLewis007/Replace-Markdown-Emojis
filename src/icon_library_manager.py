@@ -18,6 +18,13 @@ from src.constants import (
     ICONIFY_BASE_URL,
     SIMPLE_ICONS_CDN_URL,
 )
+from src.exceptions import (
+    APIError,
+    IconDownloadError,
+    IconSearchError,
+    NetworkError,
+    TimeoutError,
+)
 
 
 @dataclass
@@ -193,9 +200,38 @@ class IconifyLibrary(IconLibrary):
                     break
 
             return results
-        except (requests.RequestException, json.JSONDecodeError) as e:
-            print(f"Error searching Iconify: {e}")
-            return []
+        except requests.Timeout as e:
+            raise TimeoutError(
+                f"Request to Iconify API timed out after {API_TIMEOUT_SECONDS}s",
+                url=url,
+                timeout=API_TIMEOUT_SECONDS,
+                details=str(e),
+            ) from e
+        except requests.ConnectionError as e:
+            raise NetworkError(
+                "Failed to connect to Iconify API",
+                url=url,
+                details=str(e),
+            ) from e
+        except requests.HTTPError as e:
+            raise APIError(
+                f"Iconify API returned error: {e}",
+                url=url,
+                status_code=e.response.status_code if e.response else None,
+                details=str(e),
+            ) from e
+        except json.JSONDecodeError as e:
+            raise APIError(
+                "Invalid JSON response from Iconify API",
+                url=url,
+                details=str(e),
+            ) from e
+        except requests.RequestException as e:
+            raise NetworkError(
+                f"Network error while searching Iconify: {e}",
+                url=url,
+                details=str(e),
+            ) from e
 
     def download_icon(self, icon_name: str, size: int | None = None) -> Path:
         """Download an icon from Iconify.
@@ -243,8 +279,34 @@ class IconifyLibrary(IconLibrary):
 
             return icon_path
 
+        except requests.Timeout as e:
+            raise IconDownloadError(
+                f"Download timeout after {API_TIMEOUT_SECONDS}s",
+                icon_name=icon_name,
+                library="Iconify",
+                details=str(e),
+            ) from e
+        except requests.ConnectionError as e:
+            raise IconDownloadError(
+                "Failed to connect to Iconify API",
+                icon_name=icon_name,
+                library="Iconify",
+                details=str(e),
+            ) from e
+        except requests.HTTPError as e:
+            raise IconDownloadError(
+                f"Iconify API returned error: {e}",
+                icon_name=icon_name,
+                library="Iconify",
+                details=str(e),
+            ) from e
         except requests.RequestException as e:
-            raise RuntimeError(f"Failed to download icon {icon_name}: {e}") from e
+            raise IconDownloadError(
+                f"Network error while downloading icon: {e}",
+                icon_name=icon_name,
+                library="Iconify",
+                details=str(e),
+            ) from e
 
 
 class SimpleIconsLibrary(IconLibrary):
@@ -352,8 +414,34 @@ class SimpleIconsLibrary(IconLibrary):
 
             return icon_path
 
+        except requests.Timeout as e:
+            raise IconDownloadError(
+                f"Download timeout after {API_TIMEOUT_SECONDS}s",
+                icon_name=icon_name,
+                library="Simple Icons",
+                details=str(e),
+            ) from e
+        except requests.ConnectionError as e:
+            raise IconDownloadError(
+                "Failed to connect to Simple Icons CDN",
+                icon_name=icon_name,
+                library="Simple Icons",
+                details=str(e),
+            ) from e
+        except requests.HTTPError as e:
+            raise IconDownloadError(
+                f"Simple Icons CDN returned error: {e}",
+                icon_name=icon_name,
+                library="Simple Icons",
+                details=str(e),
+            ) from e
         except requests.RequestException as e:
-            raise RuntimeError(f"Failed to download icon {icon_name}: {e}") from e
+            raise IconDownloadError(
+                f"Network error while downloading icon: {e}",
+                icon_name=icon_name,
+                library="Simple Icons",
+                details=str(e),
+            ) from e
 
 
 class IconLibraryManager:
@@ -392,8 +480,11 @@ class IconLibraryManager:
                 icons = library.search_icons(query, limit=limit_per_library)
                 if icons:
                     results[name] = icons
+            except IconSearchError as e:
+                print(f"Search error in {name}: {e}")
+                results[name] = []
             except Exception as e:
-                print(f"Error searching {name}: {e}")
+                print(f"Unexpected error searching {name}: {e}")
                 results[name] = []
 
         return results
@@ -418,8 +509,11 @@ class IconLibraryManager:
 
         try:
             return library.download_icon(icon_name, size)
+        except IconDownloadError as e:
+            print(f"Download error: {e}")
+            return None
         except Exception as e:
-            print(f"Error downloading icon: {e}")
+            print(f"Unexpected error downloading icon: {e}")
             return None
 
     def get_available_libraries(self) -> list[str]:
