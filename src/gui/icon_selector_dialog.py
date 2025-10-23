@@ -1,7 +1,6 @@
 """Icon selector dialog with grid view and search."""
 
 from pathlib import Path
-from typing import Optional
 
 from PySide6.QtCore import QSize, Qt, QThread, Signal
 from PySide6.QtGui import QIcon, QPixmap
@@ -117,7 +116,7 @@ class IconSelectorDialog(QDialog):
     def __init__(self, manager: IconLibraryManager, initial_query: str = "", parent=None):
         super().__init__(parent)
         self.manager = manager
-        self.selected_icon: Optional[tuple[str, IconMetadata]] = None
+        self.selected_icon: tuple[str, IconMetadata] | None = None
 
         self.setWindowTitle("Select Icon")
         self.setMinimumSize(800, 600)
@@ -295,7 +294,7 @@ class IconSelectorDialog(QDialog):
         self.download_worker.error.connect(on_error)
         self.download_worker.start()
 
-    def get_selected_icon(self) -> Optional[tuple[str, IconMetadata]]:
+    def get_selected_icon(self) -> tuple[str, IconMetadata] | None:
         """Get the selected icon.
 
         Returns:

@@ -4,10 +4,10 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from src.icon_library_manager import (
+    IconifyLibrary,
     IconLibrary,
     IconLibraryManager,
     IconMetadata,
-    IconifyLibrary,
     SimpleIconsLibrary,
 )
 
@@ -244,9 +244,7 @@ class TestIconLibraryManager:
         """Test searching across all libraries."""
         # Mock responses for different libraries
         mock_response = Mock()
-        mock_response.json.return_value = {
-            "icons": [{"prefix": "mdi", "icons": ["home"]}]
-        }
+        mock_response.json.return_value = {"icons": [{"prefix": "mdi", "icons": ["home"]}]}
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
@@ -291,4 +289,3 @@ class TestIconLibraryManager:
         # Check all caches are cleared
         for library in manager.libraries.values():
             assert len(list(library.cache_dir.glob("*.svg"))) == 0
-

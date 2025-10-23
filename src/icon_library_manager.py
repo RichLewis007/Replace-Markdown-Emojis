@@ -5,7 +5,6 @@ import shutil
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import requests
 from PIL import Image
@@ -59,7 +58,7 @@ class IconLibrary(ABC):
         pass
 
     @abstractmethod
-    def download_icon(self, icon_name: str, size: Optional[int] = None) -> Path:
+    def download_icon(self, icon_name: str, size: int | None = None) -> Path:
         """Download an icon and return its local path.
 
         Args:
@@ -105,7 +104,7 @@ class IconLibrary(ABC):
             return Path(icon_path).exists()
         return False
 
-    def get_cached_path(self, icon_name: str) -> Optional[Path]:
+    def get_cached_path(self, icon_name: str) -> Path | None:
         """Get the cached path for an icon.
 
         Args:
@@ -188,7 +187,7 @@ class IconifyLibrary(IconLibrary):
             print(f"Error searching Iconify: {e}")
             return []
 
-    def download_icon(self, icon_name: str, size: Optional[int] = None) -> Path:
+    def download_icon(self, icon_name: str, size: int | None = None) -> Path:
         """Download an icon from Iconify.
 
         Args:
@@ -300,7 +299,7 @@ class SimpleIconsLibrary(IconLibrary):
 
         return results
 
-    def download_icon(self, icon_name: str, size: Optional[int] = None) -> Path:
+    def download_icon(self, icon_name: str, size: int | None = None) -> Path:
         """Download a brand icon.
 
         Args:
@@ -390,8 +389,8 @@ class IconLibraryManager:
         return results
 
     def download_icon_from_library(
-        self, library_name: str, icon_name: str, size: Optional[int] = None
-    ) -> Optional[Path]:
+        self, library_name: str, icon_name: str, size: int | None = None
+    ) -> Path | None:
         """Download an icon from a specific library.
 
         Args:
