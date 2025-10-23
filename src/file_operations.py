@@ -2,9 +2,6 @@
 
 import shutil
 from pathlib import Path
-from datetime import datetime
-from typing import List, Dict, Tuple
-import re
 
 
 class MarkdownFileHandler:
@@ -18,13 +15,13 @@ class MarkdownFileHandler:
 
     def load_file(self, file_path: str) -> str:
         """Load a markdown file.
-        
+
         Args:
             file_path: Path to the markdown file
-            
+
         Returns:
             File content as string
-            
+
         Raises:
             FileNotFoundError: If file doesn't exist
             IOError: If file can't be read
@@ -34,7 +31,7 @@ class MarkdownFileHandler:
             raise FileNotFoundError(f"File not found: {file_path}")
 
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 content = f.read()
 
             self.current_file = str(path.absolute())
@@ -42,18 +39,16 @@ class MarkdownFileHandler:
             self.modified_content = content
             return content
         except Exception as e:
-            raise IOError(f"Error reading file: {e}")
+            raise OSError(f"Error reading file: {e}")
 
-    def replace_emoji_with_icon(
-        self, emoji: str, icon_path: str, alt_text: str = None
-    ) -> int:
+    def replace_emoji_with_icon(self, emoji: str, icon_path: str, alt_text: str = None) -> int:
         """Replace all occurrences of an emoji with markdown image syntax.
-        
+
         Args:
             emoji: Emoji character to replace
             icon_path: Path to the icon file (relative or absolute)
             alt_text: Alt text for the image (defaults to icon filename)
-            
+
         Returns:
             Number of replacements made
         """
@@ -78,14 +73,14 @@ class MarkdownFileHandler:
         self, line_number: int, char_position: int, emoji: str, icon_path: str, alt_text: str = None
     ) -> bool:
         """Replace a specific emoji occurrence at given position.
-        
+
         Args:
             line_number: Line number (1-based)
             char_position: Character position in line (0-based)
             emoji: Emoji character to replace
             icon_path: Path to the icon file
             alt_text: Alt text for the image
-            
+
         Returns:
             True if replacement successful, False otherwise
         """
@@ -119,14 +114,14 @@ class MarkdownFileHandler:
 
     def save_file(self, file_path: str = None, create_backup: bool = True) -> bool:
         """Save the modified content to file.
-        
+
         Args:
             file_path: Path to save to (defaults to current file)
             create_backup: Whether to create a .bak backup
-            
+
         Returns:
             True if successful, False otherwise
-            
+
         Raises:
             ValueError: If no file is loaded
             IOError: If file can't be written
@@ -150,11 +145,11 @@ class MarkdownFileHandler:
 
             return True
         except Exception as e:
-            raise IOError(f"Error writing file: {e}")
+            raise OSError(f"Error writing file: {e}")
 
     def has_unsaved_changes(self) -> bool:
         """Check if there are unsaved changes.
-        
+
         Returns:
             True if content has been modified, False otherwise
         """
@@ -162,7 +157,7 @@ class MarkdownFileHandler:
 
     def get_current_content(self) -> str:
         """Get the current (possibly modified) content.
-        
+
         Returns:
             Current content as string
         """
@@ -170,7 +165,7 @@ class MarkdownFileHandler:
 
     def get_original_content(self) -> str:
         """Get the original (unmodified) content.
-        
+
         Returns:
             Original content as string
         """
@@ -182,7 +177,7 @@ class MarkdownFileHandler:
 
     def get_current_file_path(self) -> str:
         """Get the path of the currently loaded file.
-        
+
         Returns:
             File path or empty string if no file loaded
         """
@@ -194,7 +189,7 @@ class IconFileManager:
 
     def __init__(self, base_path: str = "./assets/icons"):
         """Initialize icon file manager.
-        
+
         Args:
             base_path: Base directory for storing icons
         """
@@ -206,11 +201,11 @@ class IconFileManager:
 
     def get_icon_path(self, icon_name: str, extension: str = "svg") -> str:
         """Get the full path for an icon file.
-        
+
         Args:
             icon_name: Name of the icon (without extension)
             extension: File extension (default: svg)
-            
+
         Returns:
             Full path to icon file
         """
@@ -222,12 +217,12 @@ class IconFileManager:
         self, icon_name: str, markdown_file_path: str, extension: str = "svg"
     ) -> str:
         """Get relative path from markdown file to icon.
-        
+
         Args:
             icon_name: Name of the icon
             markdown_file_path: Path to the markdown file
             extension: File extension
-            
+
         Returns:
             Relative path suitable for markdown
         """
@@ -244,14 +239,14 @@ class IconFileManager:
 
     def copy_icon_to_directory(self, source_path: str, icon_name: str) -> str:
         """Copy an icon file to the managed directory.
-        
+
         Args:
             source_path: Source icon file path
             icon_name: Name to save icon as
-            
+
         Returns:
             Path to the copied icon
-            
+
         Raises:
             FileNotFoundError: If source doesn't exist
             IOError: If copy fails
@@ -268,11 +263,11 @@ class IconFileManager:
             shutil.copy2(source, dest)
             return str(dest)
         except Exception as e:
-            raise IOError(f"Error copying icon: {e}")
+            raise OSError(f"Error copying icon: {e}")
 
-    def list_icons(self) -> List[str]:
+    def list_icons(self) -> list[str]:
         """List all icons in the managed directory.
-        
+
         Returns:
             List of icon filenames
         """
@@ -287,11 +282,11 @@ class IconFileManager:
 
     def delete_icon(self, icon_name: str, extension: str = None) -> bool:
         """Delete an icon file.
-        
+
         Args:
             icon_name: Name of the icon
             extension: File extension (if None, tries common extensions)
-            
+
         Returns:
             True if deleted, False if not found
         """
@@ -313,9 +308,8 @@ class IconFileManager:
 
     def get_base_path(self) -> str:
         """Get the base path for icons.
-        
+
         Returns:
             Base path as string
         """
         return str(self.base_path.absolute())
-

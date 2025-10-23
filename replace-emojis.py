@@ -12,8 +12,8 @@ from pathlib import Path
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication
 
 from gui.main_window import MainWindow
 
@@ -39,4 +39,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

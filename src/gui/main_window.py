@@ -1,31 +1,32 @@
 """Main application window."""
 
-from PySide6.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QLabel,
-    QFileDialog,
-    QMessageBox,
-    QTextEdit,
-    QGroupBox,
-    QScrollArea,
-    QGridLayout,
-    QFrame,
-)
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QFont, QAction
-from pathlib import Path
 import sys
+from pathlib import Path
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QFont
+from PySide6.QtWidgets import (
+    QFileDialog,
+    QFrame,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
 # Import our modules
 from database import EmojiDatabase
 from emoji_detector import EmojiDetector
-from matcher import EmojiMatcher, DuplicateDetectionManager
-from file_operations import MarkdownFileHandler, IconFileManager
+from file_operations import IconFileManager, MarkdownFileHandler
 from initialize_emoji_db import initialize_database
+from matcher import DuplicateDetectionManager, EmojiMatcher
 
 
 class EmojiCard(QFrame):
@@ -90,7 +91,7 @@ class EmojiCard(QFrame):
 
     def set_selected_icon(self, icon_name: str):
         """Set the selected icon for this emoji.
-        
+
         Args:
             icon_name: Name of the selected icon
         """
@@ -148,9 +149,7 @@ class MainWindow(QMainWindow):
             self.duplicate_manager = DuplicateDetectionManager(self.db, self.matcher)
 
         except Exception as e:
-            QMessageBox.critical(
-                self, "Database Error", f"Failed to initialize database: {e}"
-            )
+            QMessageBox.critical(self, "Database Error", f"Failed to initialize database: {e}")
             sys.exit(1)
 
     def setup_ui(self):
@@ -289,7 +288,7 @@ class MainWindow(QMainWindow):
 
     def detect_emojis(self, content: str):
         """Detect emojis in the content and display them.
-        
+
         Args:
             content: Markdown content
         """
@@ -334,7 +333,7 @@ class MainWindow(QMainWindow):
 
     def show_icon_selector(self, emoji_card: EmojiCard):
         """Show icon selector for an emoji card.
-        
+
         Args:
             emoji_card: The EmojiCard that was clicked
         """
@@ -398,9 +397,7 @@ class MainWindow(QMainWindow):
             return
 
         # Check if all emojis have icons selected
-        unselected = [
-            emoji for emoji, card in self.emoji_cards.items() if not card.selected_icon
-        ]
+        unselected = [emoji for emoji, card in self.emoji_cards.items() if not card.selected_icon]
 
         if unselected:
             msg = f"{len(unselected)} emoji(s) don't have icons selected. Replace anyway?"
@@ -427,9 +424,7 @@ class MainWindow(QMainWindow):
 
                 # Record in database
                 if self.duplicate_manager:
-                    occurrences = [
-                        occ for occ in self.emoji_occurrences if occ.emoji == emoji_char
-                    ]
+                    occurrences = [occ for occ in self.emoji_occurrences if occ.emoji == emoji_char]
                     for occ in occurrences:
                         self.duplicate_manager.record_replacement(
                             emoji_char, card.selected_icon, occ
@@ -443,9 +438,7 @@ class MainWindow(QMainWindow):
         self.preview_text.setPlainText(self.file_handler.get_current_content())
         self.save_btn.setEnabled(True)
 
-        QMessageBox.information(
-            self, "Success", f"Replaced {count} emoji occurrences with icons!"
-        )
+        QMessageBox.information(self, "Success", f"Replaced {count} emoji occurrences with icons!")
         self.statusBar().showMessage(f"Replaced {count} emojis")
 
     def save_file(self):
@@ -457,7 +450,9 @@ class MainWindow(QMainWindow):
             self.file_handler.save_file(create_backup=True)
             self.save_btn.setEnabled(False)
             QMessageBox.information(
-                self, "Success", f"File saved successfully!\nBackup created: {self.current_file}.bak"
+                self,
+                "Success",
+                f"File saved successfully!\nBackup created: {self.current_file}.bak",
             )
             self.statusBar().showMessage("File saved with backup")
         except Exception as e:
@@ -528,4 +523,3 @@ class MainWindow(QMainWindow):
 
         if self.db:
             self.db.close()
-

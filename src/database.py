@@ -1,10 +1,9 @@
 """Database module for managing emoji-to-keyword mappings and session tracking."""
 
-import sqlite3
 import json
+import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional, Any
 
 
 class EmojiDatabase:
@@ -12,7 +11,7 @@ class EmojiDatabase:
 
     def __init__(self, db_path: str = "./emoji-cache/emojis.db"):
         """Initialize database connection and create tables if needed.
-        
+
         Args:
             db_path: Path to the SQLite database file
         """
@@ -27,7 +26,8 @@ class EmojiDatabase:
         cursor = self.conn.cursor()
 
         # Emoji knowledge base
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS emojis (
                 unicode TEXT PRIMARY KEY,
                 common_name TEXT,
@@ -36,10 +36,12 @@ class EmojiDatabase:
                 usage_count INTEGER DEFAULT 0,
                 last_used TIMESTAMP
             )
-        """)
+        """
+        )
 
         # Icon library metadata
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS icon_libraries (
                 id INTEGER PRIMARY KEY,
                 name TEXT,
@@ -49,10 +51,12 @@ class EmojiDatabase:
                 api_endpoint TEXT,
                 last_updated TIMESTAMP
             )
-        """)
+        """
+        )
 
         # User icon selections (learning)
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS icon_mappings (
                 id INTEGER PRIMARY KEY,
                 emoji_unicode TEXT,
@@ -62,20 +66,24 @@ class EmojiDatabase:
                 last_selected TIMESTAMP,
                 FOREIGN KEY (emoji_unicode) REFERENCES emojis(unicode)
             )
-        """)
+        """
+        )
 
         # Document session tracking
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS document_sessions (
                 id INTEGER PRIMARY KEY,
                 document_path TEXT,
                 session_start TIMESTAMP,
                 session_end TIMESTAMP
             )
-        """)
+        """
+        )
 
         # Icon usage within current document session
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS session_icon_usage (
                 id INTEGER PRIMARY KEY,
                 session_id INTEGER,
@@ -86,21 +94,22 @@ class EmojiDatabase:
                 is_replaced BOOLEAN DEFAULT 0,
                 FOREIGN KEY (session_id) REFERENCES document_sessions(id)
             )
-        """)
+        """
+        )
 
         self.conn.commit()
 
     def add_emoji(
-        self, unicode: str, common_name: str, keywords: List[str], context_words: List[str] = None
+        self, unicode: str, common_name: str, keywords: list[str], context_words: list[str] = None
     ) -> bool:
         """Add a new emoji to the database.
-        
+
         Args:
             unicode: Unicode representation of emoji
             common_name: Common name for the emoji
             keywords: List of keywords associated with emoji
             context_words: Optional list of context words
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -125,13 +134,13 @@ class EmojiDatabase:
             print(f"Error adding emoji: {e}")
             return False
 
-    def search_emojis_by_keywords(self, search_terms: List[str], limit: int = 10) -> List[Dict]:
+    def search_emojis_by_keywords(self, search_terms: list[str], limit: int = 10) -> list[dict]:
         """Search for emojis matching any of the search terms.
-        
+
         Args:
             search_terms: List of keywords to search for
             limit: Maximum number of results to return
-            
+
         Returns:
             List of emoji dictionaries with match scores
         """
@@ -147,7 +156,10 @@ class EmojiDatabase:
 
             # Calculate match score
             score = sum(
-                1 for term in search_terms for keyword in all_terms if term.lower() in keyword.lower()
+                1
+                for term in search_terms
+                for keyword in all_terms
+                if term.lower() in keyword.lower()
             )
 
             if score > 0:
@@ -166,9 +178,9 @@ class EmojiDatabase:
         results.sort(key=lambda x: (x["score"], x["usage_count"]), reverse=True)
         return results[:limit]
 
-    def get_all_emojis(self) -> List[Dict]:
+    def get_all_emojis(self) -> list[dict]:
         """Get all emojis from the database.
-        
+
         Returns:
             List of all emoji dictionaries
         """
@@ -188,13 +200,13 @@ class EmojiDatabase:
             for row in rows
         ]
 
-    def update_emoji_keywords(self, unicode: str, keywords: List[str]) -> bool:
+    def update_emoji_keywords(self, unicode: str, keywords: list[str]) -> bool:
         """Update keywords for an emoji.
-        
+
         Args:
             unicode: Unicode representation of emoji
             keywords: New list of keywords
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -211,10 +223,10 @@ class EmojiDatabase:
 
     def delete_emoji(self, unicode: str) -> bool:
         """Delete an emoji from the database.
-        
+
         Args:
             unicode: Unicode representation of emoji
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -229,7 +241,7 @@ class EmojiDatabase:
 
     def increment_emoji_usage(self, unicode: str):
         """Increment usage count for an emoji.
-        
+
         Args:
             unicode: Unicode representation of emoji
         """
@@ -246,10 +258,10 @@ class EmojiDatabase:
 
     def start_document_session(self, document_path: str) -> int:
         """Start a new document session for duplicate tracking.
-        
+
         Args:
             document_path: Path to the document being edited
-            
+
         Returns:
             Session ID
         """
@@ -266,7 +278,7 @@ class EmojiDatabase:
 
     def end_document_session(self, session_id: int):
         """End a document session.
-        
+
         Args:
             session_id: ID of the session to end
         """
@@ -290,7 +302,7 @@ class EmojiDatabase:
         line_number: int,
     ):
         """Record icon usage in current session for duplicate detection.
-        
+
         Args:
             session_id: Current document session ID
             emoji_unicode: Unicode of the emoji being replaced
@@ -309,13 +321,13 @@ class EmojiDatabase:
         )
         self.conn.commit()
 
-    def get_session_icon_usages(self, session_id: int, icon_name: str = None) -> List[Dict]:
+    def get_session_icon_usages(self, session_id: int, icon_name: str = None) -> list[dict]:
         """Get all icon usages for a session, optionally filtered by icon name.
-        
+
         Args:
             session_id: Document session ID
             icon_name: Optional icon name to filter by
-            
+
         Returns:
             List of icon usage dictionaries
         """
@@ -329,9 +341,7 @@ class EmojiDatabase:
                 (session_id, icon_name),
             )
         else:
-            cursor.execute(
-                "SELECT * FROM session_icon_usage WHERE session_id = ?", (session_id,)
-            )
+            cursor.execute("SELECT * FROM session_icon_usage WHERE session_id = ?", (session_id,))
 
         rows = cursor.fetchall()
         return [
@@ -347,7 +357,7 @@ class EmojiDatabase:
 
     def record_icon_selection(self, emoji_unicode: str, library_name: str, icon_name: str):
         """Record user's icon selection for learning.
-        
+
         Args:
             emoji_unicode: Unicode of the emoji
             library_name: Name of icon library
@@ -388,15 +398,13 @@ class EmojiDatabase:
 
         self.conn.commit()
 
-    def get_popular_icon_for_emoji(
-        self, emoji_unicode: str, library_name: str
-    ) -> Optional[str]:
+    def get_popular_icon_for_emoji(self, emoji_unicode: str, library_name: str) -> str | None:
         """Get the most popular icon selection for an emoji in a library.
-        
+
         Args:
             emoji_unicode: Unicode of the emoji
             library_name: Name of icon library
-            
+
         Returns:
             Icon name or None if no history
         """
@@ -415,7 +423,7 @@ class EmojiDatabase:
 
     def clear_old_sessions(self, days: int = 30):
         """Clear document sessions older than specified days.
-        
+
         Args:
             days: Number of days to keep
         """
@@ -452,4 +460,3 @@ class EmojiDatabase:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.close()
-

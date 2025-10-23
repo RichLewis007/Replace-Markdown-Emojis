@@ -1,9 +1,9 @@
 """Emoji detection and context extraction module."""
 
 import re
-import emoji as emoji_lib
-from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
+
+import emoji as emoji_lib
 
 
 @dataclass
@@ -27,12 +27,12 @@ class EmojiDetector:
         """Initialize the emoji detector."""
         self.heading_pattern = re.compile(r"^(#{1,6})\s+(.*)$", re.MULTILINE)
 
-    def detect_emojis_in_text(self, text: str) -> List[EmojiOccurrence]:
+    def detect_emojis_in_text(self, text: str) -> list[EmojiOccurrence]:
         """Detect all emojis in text with their context.
-        
+
         Args:
             text: The markdown text to search
-            
+
         Returns:
             List of EmojiOccurrence objects
         """
@@ -70,12 +70,12 @@ class EmojiDetector:
 
     def _extract_context_before(self, line: str, position: int, max_chars: int = 15) -> str:
         """Extract context before an emoji.
-        
+
         Args:
             line: The full line text
             position: Position of the emoji
             max_chars: Maximum characters to extract
-            
+
         Returns:
             Context string before the emoji
         """
@@ -85,12 +85,12 @@ class EmojiDetector:
 
     def _extract_context_after(self, line: str, position: int, max_chars: int = 30) -> str:
         """Extract context after an emoji.
-        
+
         Args:
             line: The full line text
             position: Position after the emoji
             max_chars: Maximum characters to extract
-            
+
         Returns:
             Context string after the emoji
         """
@@ -98,12 +98,12 @@ class EmojiDetector:
         context = line[position:end].strip()
         return context
 
-    def extract_keywords_from_context(self, occurrence: EmojiOccurrence) -> List[str]:
+    def extract_keywords_from_context(self, occurrence: EmojiOccurrence) -> list[str]:
         """Extract keywords from emoji context for matching.
-        
+
         Args:
             occurrence: EmojiOccurrence object
-            
+
         Returns:
             List of keywords extracted from context
         """
@@ -158,21 +158,21 @@ class EmojiDetector:
 
     def _remove_emojis(self, text: str) -> str:
         """Remove all emojis from text.
-        
+
         Args:
             text: Text to clean
-            
+
         Returns:
             Text with emojis removed
         """
         return emoji_lib.replace_emoji(text, "")
 
-    def get_unique_emojis(self, occurrences: List[EmojiOccurrence]) -> List[str]:
+    def get_unique_emojis(self, occurrences: list[EmojiOccurrence]) -> list[str]:
         """Get list of unique emojis from occurrences.
-        
+
         Args:
             occurrences: List of EmojiOccurrence objects
-            
+
         Returns:
             List of unique emoji characters
         """
@@ -185,13 +185,13 @@ class EmojiDetector:
         return unique
 
     def group_occurrences_by_emoji(
-        self, occurrences: List[EmojiOccurrence]
-    ) -> Dict[str, List[EmojiOccurrence]]:
+        self, occurrences: list[EmojiOccurrence]
+    ) -> dict[str, list[EmojiOccurrence]]:
         """Group occurrences by emoji character.
-        
+
         Args:
             occurrences: List of EmojiOccurrence objects
-            
+
         Returns:
             Dictionary mapping emoji to list of occurrences
         """
@@ -204,10 +204,10 @@ class EmojiDetector:
 
     def get_context_summary(self, occurrence: EmojiOccurrence) -> str:
         """Get a human-readable context summary for display.
-        
+
         Args:
             occurrence: EmojiOccurrence object
-            
+
         Returns:
             Context summary string
         """
@@ -223,10 +223,10 @@ class EmojiDetector:
 
     def normalize_context_for_comparison(self, context: str) -> str:
         """Normalize context text for duplicate detection comparison.
-        
+
         Args:
             context: Context text to normalize
-            
+
         Returns:
             Normalized context text
         """
@@ -241,4 +241,3 @@ class EmojiDetector:
         # Remove punctuation
         context = re.sub(r"[^\w\s]", "", context)
         return context.strip()
-

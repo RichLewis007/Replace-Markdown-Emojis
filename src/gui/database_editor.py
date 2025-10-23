@@ -1,21 +1,20 @@
 """Database editor dialog for managing emoji mappings."""
 
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QDialog,
-    QVBoxLayout,
     QHBoxLayout,
+    QHeaderView,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
     QPushButton,
     QTableWidget,
     QTableWidgetItem,
-    QLineEdit,
-    QLabel,
-    QMessageBox,
-    QInputDialog,
-    QHeaderView,
+    QVBoxLayout,
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
-import json
 
 from database import EmojiDatabase
 
@@ -231,4 +230,3 @@ class DatabaseEditorDialog(QDialog):
                 self.load_data()
             else:
                 QMessageBox.critical(self, "Error", "Failed to delete emoji.")
-
