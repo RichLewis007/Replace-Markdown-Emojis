@@ -75,7 +75,11 @@ class IconDownloadError(IconLibraryError):
     """Icon download errors."""
 
     def __init__(
-        self, message: str, icon_name: str | None = None, library: str | None = None, details: str | None = None
+        self,
+        message: str,
+        icon_name: str | None = None,
+        library: str | None = None,
+        details: str | None = None,
     ):
         super().__init__(f"Failed to download icon: {message}", library, details)
         self.icon_name = icon_name
@@ -85,7 +89,11 @@ class IconSearchError(IconLibraryError):
     """Icon search errors."""
 
     def __init__(
-        self, message: str, query: str | None = None, library: str | None = None, details: str | None = None
+        self,
+        message: str,
+        query: str | None = None,
+        library: str | None = None,
+        details: str | None = None,
     ):
         super().__init__(f"Failed to search icons: {message}", library, details)
         self.query = query
@@ -103,7 +111,11 @@ class EmojiMatchingError(EmojiReplacerError):
     """Emoji matching errors."""
 
     def __init__(
-        self, message: str, emoji: str | None = None, keywords: list[str] | None = None, details: str | None = None
+        self,
+        message: str,
+        emoji: str | None = None,
+        keywords: list[str] | None = None,
+        details: str | None = None,
     ):
         super().__init__(f"Emoji matching failed: {message}", details)
         self.emoji = emoji
@@ -121,7 +133,13 @@ class ConfigurationError(EmojiReplacerError):
 class ValidationError(EmojiReplacerError):
     """Data validation errors."""
 
-    def __init__(self, message: str, field: str | None = None, value: str | None = None, details: str | None = None):
+    def __init__(
+        self,
+        message: str,
+        field: str | None = None,
+        value: str | None = None,
+        details: str | None = None,
+    ):
         super().__init__(f"Validation error: {message}", details)
         self.field = field
         self.value = value
@@ -146,7 +164,13 @@ class NetworkError(EmojiReplacerError):
 class TimeoutError(NetworkError):
     """Network timeout errors."""
 
-    def __init__(self, message: str, url: str | None = None, timeout: int | None = None, details: str | None = None):
+    def __init__(
+        self,
+        message: str,
+        url: str | None = None,
+        timeout: int | None = None,
+        details: str | None = None,
+    ):
         super().__init__(f"Request timeout: {message}", url, details)
         self.timeout = timeout
 
@@ -155,7 +179,11 @@ class APIError(NetworkError):
     """API-related errors."""
 
     def __init__(
-        self, message: str, url: str | None = None, status_code: int | None = None, details: str | None = None
+        self,
+        message: str,
+        url: str | None = None,
+        status_code: int | None = None,
+        details: str | None = None,
     ):
         super().__init__(f"API error: {message}", url, details)
         self.status_code = status_code

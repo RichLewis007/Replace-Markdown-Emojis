@@ -7,8 +7,8 @@ Author: Rich Lewis
 from pathlib import Path
 
 # Third-party
-from PySide6.QtCore import QSize, Qt, QThread, Signal
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtGui import QPixmap
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
     QComboBox,
@@ -27,7 +27,6 @@ from PySide6.QtWidgets import (
 
 # Local imports
 from src.constants import (
-    API_TIMEOUT_SECONDS,
     DEFAULT_ICON_SIZE,
     DEFAULT_SEARCH_LIMIT,
     DEFAULT_WINDOW_HEIGHT,
@@ -37,11 +36,11 @@ from src.constants import (
     ICON_BUTTON_SIZE,
     ICON_DISPLAY_SIZE,
     ICON_GRID_COLUMNS,
-    ICON_GRID_SPACING,
+    LAYOUT_MARGINS,
     MAX_DISPLAY_NAME_LENGTH,
     THUMBNAIL_SIZE,
 )
-from src.exceptions import IconDownloadError, IconSearchError
+from src.exceptions import IconDownloadError
 from src.icon_library_manager import IconLibraryManager, IconMetadata
 
 
@@ -61,7 +60,10 @@ class IconDownloadWorker(QThread):
         self.size = size
 
     def run(self) -> None:
-        """Download the icon."""
+        """Download the icon in a background thread.
+
+        Emits finished signal with icon path on success, or error signal on failure.
+        """
         try:
             path = self.manager.download_icon_from_library(self.library, self.icon_name, self.size)
             if path:
@@ -77,7 +79,13 @@ class IconDownloadWorker(QThread):
 class IconButton(QPushButton):
     """Button displaying an icon with metadata."""
 
-    def __init__(self, metadata: IconMetadata, parent=None):
+    def __init__(self, metadata: IconMetadata, parent: QWidget | None = None) -> None:
+        """Initialize the icon button widget.
+
+        Args:
+            metadata: IconMetadata object containing icon information
+            parent: Parent widget (optional)
+        """
         super().__init__(parent)
         self.metadata = metadata
         self.setFixedSize(ICON_BUTTON_SIZE, ICON_BUTTON_HEIGHT)
@@ -85,7 +93,7 @@ class IconButton(QPushButton):
 
         # Set up layout
         layout = QVBoxLayout()
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(LAYOUT_MARGINS, LAYOUT_MARGINS, LAYOUT_MARGINS, LAYOUT_MARGINS)
 
         # Icon placeholder
         self.icon_label = QLabel()
@@ -119,13 +127,17 @@ class IconButton(QPushButton):
             self.icon_label.setText("📦")
 
     def _load_icon(self, icon_path: Path) -> None:
-        """Load and display the icon."""
+        """Load and display the icon from the given path.
+
+        Args:
+            icon_path: Path to the icon file to load
+        """
         if icon_path.suffix == ".svg":
             # Load SVG
             renderer = QSvgRenderer(str(icon_path))
             pixmap = QPixmap(ICON_DISPLAY_SIZE, ICON_DISPLAY_SIZE)
             pixmap.fill(Qt.transparent)
-            from PySide6.QtGui import QPainter
+            from PySide6.QtGui import QPainter  # noqa: PLC0415
 
             painter = QPainter(pixmap)
             renderer.render(painter)
@@ -136,7 +148,10 @@ class IconButton(QPushButton):
             pixmap = QPixmap(str(icon_path))
             self.icon_label.setPixmap(
                 pixmap.scaled(
-                    ICON_DISPLAY_SIZE, ICON_DISPLAY_SIZE, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                    ICON_DISPLAY_SIZE,
+                    ICON_DISPLAY_SIZE,
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation,
                 )
             )
 
@@ -146,7 +161,16 @@ class IconSelectorDialog(QDialog):
 
     icon_selected = Signal(str, Path)  # library_name, icon_path
 
-    def __init__(self, manager: IconLibraryManager, initial_query: str = "", parent=None):
+    def __init__(
+        self, manager: IconLibraryManager, initial_query: str = "", parent: QWidget | None = None
+    ) -> None:
+        """Initialize the icon selector dialog.
+
+        Args:
+            manager: IconLibraryManager instance for accessing icon libraries
+            initial_query: Initial search query (optional)
+            parent: Parent widget (optional)
+        """
         super().__init__(parent)
         self.manager = manager
         self.selected_icon: tuple[str, IconMetadata] | None = None
@@ -162,7 +186,10 @@ class IconSelectorDialog(QDialog):
             self.search_icons()
 
     def setup_ui(self) -> None:
-        """Set up the user interface."""
+        """Set up the user interface components.
+
+        Creates the search bar, icon grid, and action buttons for the dialog.
+        """
         layout = QVBoxLayout()
 
         # Top controls
@@ -225,7 +252,11 @@ class IconSelectorDialog(QDialog):
         self.setLayout(layout)
 
     def search_icons(self) -> None:
-        """Search for icons based on current query."""
+        """Search for icons based on the current query.
+
+        Searches across all available icon libraries and displays results in a grid.
+        Clears previous results before showing new ones.
+        """
         query = self.search_input.text().strip()
         if not query:
             return
@@ -239,11 +270,17 @@ class IconSelectorDialog(QDialog):
 
         # Search
         if selected_lib == "All Libraries":
-            results = self.manager.search_all_libraries(query, limit_per_library=DEFAULT_SEARCH_LIMIT // 2)
+            results = self.manager.search_all_libraries(
+                query, limit_per_library=DEFAULT_SEARCH_LIMIT // 2
+            )
         else:
             lib_key = selected_lib.lower().replace(" ", "-")
             if lib_key in self.manager.libraries:
-                results = {lib_key: self.manager.libraries[lib_key].search_icons(query, limit=DEFAULT_SEARCH_LIMIT)}
+                results = {
+                    lib_key: self.manager.libraries[lib_key].search_icons(
+                        query, limit=DEFAULT_SEARCH_LIMIT
+                    )
+                }
             else:
                 results = {}
 
@@ -272,7 +309,10 @@ class IconSelectorDialog(QDialog):
                     row += 1
 
     def clear_grid(self) -> None:
-        """Clear all icons from the grid."""
+        """Clear all icons from the grid.
+
+        Removes all icon buttons from the grid layout and properly disposes of them.
+        """
         while self.icon_grid.count():
             item = self.icon_grid.takeAt(0)
             if item.widget():
@@ -299,6 +339,13 @@ class IconSelectorDialog(QDialog):
     def download_and_accept(self, library_name: str, metadata: IconMetadata) -> None:
         """Download icon and accept dialog.
 
+        Downloads the selected icon in a background thread, then accepts the dialog
+        when the download completes successfully.
+
+        Args:
+            library_name: Name of the icon library
+            metadata: IconMetadata object for the selected icon
+
         Args:
             library_name: Library name
             metadata: Icon metadata
@@ -314,7 +361,7 @@ class IconSelectorDialog(QDialog):
             self.manager, library_name, metadata.name, size=DEFAULT_ICON_SIZE
         )
 
-        def on_finished(path: Path) -> None:
+        def on_finished(_path: Path) -> None:
             progress.close()
             self.selected_icon = (library_name, metadata)
             self.accept()
@@ -328,15 +375,18 @@ class IconSelectorDialog(QDialog):
         self.download_worker.start()
 
     def get_selected_icon(self) -> tuple[str, IconMetadata] | None:
-        """Get the selected icon.
+        """Get the selected icon from the dialog.
 
         Returns:
-            Tuple of (library_name, metadata) or None
+            Tuple of (library_name, metadata) if an icon was selected, None otherwise
         """
         return self.selected_icon
 
     def accept(self) -> None:
-        """Accept the dialog and emit signal."""
+        """Accept the dialog and emit icon_selected signal if an icon was selected.
+
+        Overrides QDialog.accept() to emit the icon_selected signal before closing.
+        """
         if self.selected_icon:
             library_name, metadata = self.selected_icon
             if metadata.file_path.exists():

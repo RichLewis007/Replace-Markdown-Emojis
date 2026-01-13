@@ -7,8 +7,18 @@ from dataclasses import dataclass
 from fuzzywuzzy import fuzz
 
 # Local imports
-from database import EmojiDatabase
-from emoji_detector import EmojiDetector, EmojiOccurrence
+from src.constants import (
+    CRITICAL_SIMILARITY_THRESHOLD,
+    DEFAULT_ICON_SUGGESTIONS_LIMIT,
+    EXACT_EMOJI_MATCH_BONUS,
+    MAX_USAGE_COUNT_SCORE,
+    SEARCH_LIMIT_MULTIPLIER,
+    SIMILARITY_THRESHOLD,
+    USAGE_COUNT_DIVISOR,
+    VERY_HIGH_MATCH_SCORE,
+)
+from src.database import EmojiDatabase
+from src.emoji_detector import EmojiDetector, EmojiOccurrence
 
 
 @dataclass
@@ -38,7 +48,7 @@ class DuplicateWarning:
 class EmojiMatcher:
     """Matches emojis to icons based on keywords and context."""
 
-    def __init__(self, db: EmojiDatabase):
+    def __init__(self, db: EmojiDatabase) -> None:
         """Initialize the matcher.
 
         Args:
@@ -46,10 +56,13 @@ class EmojiMatcher:
         """
         self.db = db
         self.detector = EmojiDetector()
-        self.similarity_threshold = 50  # Configurable threshold for duplicate detection
+        self.similarity_threshold = SIMILARITY_THRESHOLD
 
     def find_icon_suggestions(
-        self, occurrence: EmojiOccurrence, library_name: str = None, limit: int = 10
+        self,
+        occurrence: EmojiOccurrence,
+        library_name: str | None = None,
+        limit: int = DEFAULT_ICON_SUGGESTIONS_LIMIT,
     ) -> list[IconSuggestion]:
         """Find icon suggestions for an emoji occurrence.
 
@@ -68,7 +81,7 @@ class EmojiMatcher:
 
         # Get emoji from database
         emojis = self.db.search_emojis_by_keywords(
-            context_keywords + [occurrence.emoji], limit=limit * 2
+            [*context_keywords, occurrence.emoji], limit=limit * SEARCH_LIMIT_MULTIPLIER
         )
 
         for emoji_data in emojis:
@@ -87,10 +100,10 @@ class EmojiMatcher:
 
             # Add score for exact emoji match
             if emoji_data["unicode"] == occurrence.emoji:
-                score += 10
+                score += EXACT_EMOJI_MATCH_BONUS
 
             # Add score for usage count (popular emojis)
-            score += min(emoji_data["usage_count"] // 10, 5)
+            score += min(emoji_data["usage_count"] // USAGE_COUNT_DIVISOR, MAX_USAGE_COUNT_SCORE)
 
             if score > 0:
                 # Use common name as icon name (in real app, would fetch from icon library)
@@ -111,7 +124,7 @@ class EmojiMatcher:
                 learned_suggestion = IconSuggestion(
                     icon_name=popular_icon,
                     emoji_unicode=occurrence.emoji,
-                    match_score=1000,  # Very high score
+                    match_score=VERY_HIGH_MATCH_SCORE,
                     source="learned",
                     keywords_matched=["user_preference"],
                 )
@@ -163,7 +176,7 @@ class EmojiMatcher:
 
             # If contexts are different enough, warn user
             if similarity < self.similarity_threshold:
-                is_critical = similarity < 30  # Very different contexts
+                is_critical = similarity < CRITICAL_SIMILARITY_THRESHOLD
 
                 return DuplicateWarning(
                     icon_name=icon_name,
@@ -177,7 +190,7 @@ class EmojiMatcher:
 
         return None
 
-    def set_similarity_threshold(self, threshold: int):
+    def set_similarity_threshold(self, threshold: int) -> None:
         """Set the similarity threshold for duplicate detection.
 
         Args:
@@ -208,7 +221,7 @@ class EmojiMatcher:
 class DuplicateDetectionManager:
     """Manages duplicate detection across document session."""
 
-    def __init__(self, db: EmojiDatabase, matcher: EmojiMatcher):
+    def __init__(self, db: EmojiDatabase, matcher: EmojiMatcher) -> None:
         """Initialize duplicate detection manager.
 
         Args:
@@ -217,7 +230,7 @@ class DuplicateDetectionManager:
         """
         self.db = db
         self.matcher = matcher
-        self.current_session_id = None
+        self.current_session_id: int | None = None
 
     def start_session(self, document_path: str) -> int:
         """Start a new document session.
@@ -231,13 +244,15 @@ class DuplicateDetectionManager:
         self.current_session_id = self.db.start_document_session(document_path)
         return self.current_session_id
 
-    def end_session(self):
+    def end_session(self) -> None:
         """End the current document session."""
         if self.current_session_id:
             self.db.end_document_session(self.current_session_id)
             self.current_session_id = None
 
-    def record_replacement(self, emoji_unicode: str, icon_name: str, occurrence: EmojiOccurrence):
+    def record_replacement(
+        self, emoji_unicode: str, icon_name: str, occurrence: EmojiOccurrence
+    ) -> None:
         """Record an icon replacement in the current session.
 
         Args:
@@ -275,10 +290,14 @@ class DuplicateDetectionManager:
         return self.matcher.check_duplicate_usage(self.current_session_id, icon_name, occurrence)
 
     def get_all_replacements(self) -> list[dict]:
-        """Get all replacements made in current session.
+        """Get all replacements made in the current session.
 
         Returns:
-            List of replacement dictionaries
+            List of replacement dictionaries, each containing:
+            - emoji_unicode: The emoji that was replaced
+            - icon_name: The icon that replaced it
+            - context_text: Context around the replacement
+            - line_number: Line number where replacement occurred
         """
         if not self.current_session_id:
             return []

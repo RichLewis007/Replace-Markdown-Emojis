@@ -7,6 +7,15 @@ from dataclasses import dataclass
 # Third-party
 import emoji as emoji_lib
 
+# Local imports
+from src.constants import (
+    CONTEXT_AFTER_MAX_CHARS,
+    CONTEXT_AFTER_PREVIEW_LENGTH,
+    CONTEXT_BEFORE_MAX_CHARS,
+    CONTEXT_BEFORE_PREVIEW_LENGTH,
+    MIN_KEYWORD_LENGTH,
+)
+
 
 @dataclass
 class EmojiOccurrence:
@@ -25,7 +34,7 @@ class EmojiOccurrence:
 class EmojiDetector:
     """Detects and extracts emojis from markdown documents with context."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the emoji detector."""
         self.heading_pattern = re.compile(r"^(#{1,6})\s+(.*)$", re.MULTILINE)
 
@@ -45,14 +54,14 @@ class EmojiDetector:
             # Check if line is a heading
             heading_match = self.heading_pattern.match(line)
             is_heading = heading_match is not None
-            heading_level = len(heading_match.group(1)) if is_heading else 0
+            heading_level = len(heading_match.group(1)) if heading_match is not None else 0
 
             # Find all emojis in the line
             for match in emoji_lib.emoji_list(line):
                 emoji_char = match["emoji"]
                 char_pos = match["match_start"]
 
-                # Extract context (10 chars before and after, or word boundaries)
+                # Extract context (word boundaries preferred, fallback to character limits)
                 context_before = self._extract_context_before(line, char_pos)
                 context_after = self._extract_context_after(line, char_pos + len(emoji_char))
 
@@ -70,7 +79,9 @@ class EmojiDetector:
 
         return occurrences
 
-    def _extract_context_before(self, line: str, position: int, max_chars: int = 15) -> str:
+    def _extract_context_before(
+        self, line: str, position: int, max_chars: int = CONTEXT_BEFORE_MAX_CHARS
+    ) -> str:
         """Extract context before an emoji.
 
         Args:
@@ -85,7 +96,9 @@ class EmojiDetector:
         context = line[start:position].strip()
         return context
 
-    def _extract_context_after(self, line: str, position: int, max_chars: int = 30) -> str:
+    def _extract_context_after(
+        self, line: str, position: int, max_chars: int = CONTEXT_AFTER_MAX_CHARS
+    ) -> str:
         """Extract context after an emoji.
 
         Args:
@@ -154,7 +167,7 @@ class EmojiDetector:
             "this",
             "that",
         }
-        keywords = [k for k in keywords if k not in stop_words and len(k) > 2]
+        keywords = [k for k in keywords if k not in stop_words and len(k) > MIN_KEYWORD_LENGTH]
 
         return keywords
 
@@ -167,7 +180,8 @@ class EmojiDetector:
         Returns:
             Text with emojis removed
         """
-        return emoji_lib.replace_emoji(text, "")
+        result = emoji_lib.replace_emoji(text, "")
+        return str(result)
 
     def get_unique_emojis(self, occurrences: list[EmojiOccurrence]) -> list[str]:
         """Get list of unique emojis from occurrences.
@@ -197,7 +211,7 @@ class EmojiDetector:
         Returns:
             Dictionary mapping emoji to list of occurrences
         """
-        grouped = {}
+        grouped: dict[str, list[EmojiOccurrence]] = {}
         for occ in occurrences:
             if occ.emoji not in grouped:
                 grouped[occ.emoji] = []
@@ -219,8 +233,16 @@ class EmojiDetector:
             return f"Heading: {heading_text.strip()}"
         else:
             # Show surrounding context
-            before = occurrence.context_before[-20:] if occurrence.context_before else ""
-            after = occurrence.context_after[:30] if occurrence.context_after else ""
+            before = (
+                occurrence.context_before[-CONTEXT_BEFORE_PREVIEW_LENGTH:]
+                if occurrence.context_before
+                else ""
+            )
+            after = (
+                occurrence.context_after[:CONTEXT_AFTER_PREVIEW_LENGTH]
+                if occurrence.context_after
+                else ""
+            )
             return f"{before} {occurrence.emoji} {after}".strip()
 
     def normalize_context_for_comparison(self, context: str) -> str:

@@ -1,6 +1,7 @@
 repos:
+  # General file checks (fast, should run first)
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -10,45 +11,49 @@ repos:
       - id: debug-statements
       - id: check-toml
 
-  - repo: https://github.com/psf/black
-    rev: 23.12.1
+  # Code formatting and linting (ruff is faster and black-compatible)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.11
     hooks:
-      - id: black
-        language_version: python3.11
-
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.1.8
-    hooks:
+      # Format code (black-compatible, faster than black)
+      - id: ruff-format
+      # Lint and auto-fix issues
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-      - id: ruff-format
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args: ["--profile", "black"]
-
+  # Type checking (slower, runs after formatting/linting)
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
+    rev: v1.19.1
     hooks:
       - id: mypy
         additional_dependencies: [types-requests, types-Pillow]
         args: [--ignore-missing-imports]
+        # Only run on Python files
+        types: [python]
 
+  # Security checks (important but can be slower)
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.5
+    rev: 1.9.2
     hooks:
       - id: bandit
         args: [-r, src/, -f, json, -o, bandit-report.json]
         exclude: tests/
+        # Run on all Python files in src/, not individual files
+        pass_filenames: false
+        files: ^src/.*\.py$
 
-  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
-    rev: v2.3.5
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.7.0
     hooks:
-      - id: python-safety-dependencies-check
-        args: [--full-report]
+      - id: pip-audit
+        args: [--desc]
+        # Check dependencies from pyproject.toml or uv.lock
+        files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
 
+  # Tests (run when test or source files change)
+  # Note: Running full test suite on every commit can be slow
+  # Consider using 'pre-commit run pytest --hook-stage manual' for manual runs
   - repo: local
     hooks:
       - id: pytest
@@ -56,5 +61,7 @@ repos:
         entry: uv run pytest
         language: system
         pass_filenames: false
-        always_run: true
-        args: [--tb=short, -v]
+        # Only run when test files or source files change
+        files: ^(tests/|src/)
+        args: [--tb=short, -v, --no-cov]
+        # Don't generate coverage in pre-commit (too slow, generates files)

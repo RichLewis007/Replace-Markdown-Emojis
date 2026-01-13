@@ -1,6 +1,7 @@
 """Main application window."""
 
 # Standard library
+import contextlib
 import sys
 from pathlib import Path
 
@@ -24,43 +25,61 @@ from PySide6.QtWidgets import (
 )
 
 # Local imports
-from database import EmojiDatabase
-from emoji_detector import EmojiDetector
-from file_operations import IconFileManager, MarkdownFileHandler
-from initialize_emoji_db import initialize_database
-from matcher import DuplicateDetectionManager, EmojiMatcher
-from src.exceptions import DatabaseError, FileOperationError, IconDownloadError
+from src.constants import (
+    CONTEXT_PREVIEW_LENGTH,
+    DEFAULT_ICON_SUGGESTIONS_LIMIT,
+    DEFAULT_WINDOW_HEIGHT,
+    DEFAULT_WINDOW_WIDTH,
+    EMOJI_FONT_SIZE,
+    FRAME_LINE_WIDTH,
+)
+from src.database import EmojiDatabase
+from src.emoji_detector import EmojiDetector, EmojiOccurrence
+from src.exceptions import DatabaseError, FileOperationError
+from src.file_operations import IconFileManager, MarkdownFileHandler
+from src.initialize_emoji_db import initialize_database
+from src.matcher import DuplicateDetectionManager, EmojiMatcher
 
 
 class EmojiCard(QFrame):
     """Widget representing a detected emoji with its context."""
 
-    def __init__(self, emoji: str, context: str, line_number: int, parent=None):
+    def __init__(
+        self, emoji: str, context: str, line_number: int, parent: QWidget | None = None
+    ) -> None:
+        """Initialize the emoji card widget.
+
+        Args:
+            emoji: The emoji character to display
+            context: Context text around the emoji
+            line_number: Line number where emoji was found
+            parent: Parent widget (optional)
+        """
         super().__init__(parent)
         self.emoji = emoji
         self.context = context
         self.line_number = line_number
-        self.selected_icon = None
+        self.selected_icon: str | None = None
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI for the emoji card."""
         self.setFrameStyle(QFrame.Box | QFrame.Raised)
-        self.setLineWidth(2)
+        self.setLineWidth(FRAME_LINE_WIDTH)
 
         layout = QVBoxLayout()
 
         # Emoji display (large)
         emoji_label = QLabel(self.emoji)
         emoji_font = QFont()
-        emoji_font.setPointSize(48)
+        emoji_font.setPointSize(EMOJI_FONT_SIZE)
         emoji_label.setFont(emoji_font)
         emoji_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(emoji_label)
 
         # Context
-        context_label = QLabel(f"Context: {self.context[:50]}...")
+        context_label = QLabel(f"Context: {self.context[:CONTEXT_PREVIEW_LENGTH]}...")
         context_label.setWordWrap(True)
         context_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(context_label)
@@ -82,17 +101,17 @@ class EmojiCard(QFrame):
 
         self.setLayout(layout)
 
-    def on_select_clicked(self):
+    def on_select_clicked(self) -> None:
         """Handle select button click."""
         # Emit signal or call parent method
         if self.parent():
             parent = self.parent()
             while parent and not isinstance(parent, MainWindow):
                 parent = parent.parent()
-            if parent:
+            if parent and isinstance(parent, MainWindow):
                 parent.show_icon_selector(self)
 
-    def set_selected_icon(self, icon_name: str):
+    def set_selected_icon(self, icon_name: str) -> None:
         """Set the selected icon for this emoji.
 
         Args:
@@ -106,23 +125,28 @@ class EmojiCard(QFrame):
 class MainWindow(QMainWindow):
     """Main application window."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the main application window.
+
+        Sets up the UI, initializes database connection, and prepares
+        the application for use.
+        """
         super().__init__()
         self.setWindowTitle("Replace Markdown Emojis")
-        self.resize(1200, 800)
+        self.resize(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT)
 
         # Initialize components
-        self.db = None
+        self.db: EmojiDatabase | None = None
         self.detector = EmojiDetector()
-        self.matcher = None
-        self.duplicate_manager = None
+        self.matcher: EmojiMatcher | None = None
+        self.duplicate_manager: DuplicateDetectionManager | None = None
         self.file_handler = MarkdownFileHandler()
         self.icon_manager = IconFileManager()
 
         # Current state
-        self.current_file = None
-        self.emoji_occurrences = []
-        self.emoji_cards = {}
+        self.current_file: str | None = None
+        self.emoji_occurrences: list[EmojiOccurrence] = []
+        self.emoji_cards: dict[str, EmojiCard] = {}
 
         # Initialize database
         self.initialize_database()
@@ -131,10 +155,16 @@ class MainWindow(QMainWindow):
         self.setup_ui()
         self.create_menus()
 
-    def initialize_database(self):
+    def initialize_database(self) -> None:
         """Initialize the emoji database."""
+        self.db = None
         try:
-            db_path = "./emoji-cache/emojis.db"
+            from src.constants import CACHE_DIR_NAME, DB_FILENAME  # noqa: PLC0415
+
+            # Use local cache directory (fallback to current directory for compatibility)
+            cache_dir = Path(CACHE_DIR_NAME)
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            db_path = str(cache_dir / DB_FILENAME)
             db_file = Path(db_path)
 
             # Initialize database if it doesn't exist
@@ -152,6 +182,9 @@ class MainWindow(QMainWindow):
             self.duplicate_manager = DuplicateDetectionManager(self.db, self.matcher)
 
         except DatabaseError as e:
+            if self.db:
+                self.db.close()
+                self.db = None
             QMessageBox.critical(
                 self,
                 "Database Error",
@@ -159,6 +192,9 @@ class MainWindow(QMainWindow):
             )
             sys.exit(1)
         except Exception as e:
+            if self.db:
+                self.db.close()
+                self.db = None
             QMessageBox.critical(
                 self,
                 "Unexpected Error",
@@ -166,7 +202,7 @@ class MainWindow(QMainWindow):
             )
             sys.exit(1)
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the main UI."""
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -228,7 +264,7 @@ class MainWindow(QMainWindow):
         # Status bar
         self.statusBar().showMessage("Ready")
 
-    def create_menus(self):
+    def create_menus(self) -> None:
         """Create application menus."""
         menubar = self.menuBar()
 
@@ -270,7 +306,7 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
 
-    def open_file(self):
+    def open_file(self) -> None:
         """Open a markdown file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Open Markdown File", "", "Markdown Files (*.md);;All Files (*)"
@@ -310,7 +346,7 @@ class MainWindow(QMainWindow):
                     f"Unexpected error opening file: {e}",
                 )
 
-    def detect_emojis(self, content: str):
+    def detect_emojis(self, content: str) -> None:
         """Detect emojis in the content and display them.
 
         Args:
@@ -318,9 +354,11 @@ class MainWindow(QMainWindow):
         """
         # Clear existing emoji cards
         for i in reversed(range(self.emoji_grid.count())):
-            widget = self.emoji_grid.itemAt(i).widget()
-            if widget:
-                widget.deleteLater()
+            item = self.emoji_grid.itemAt(i)
+            if item:
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()
 
         self.emoji_cards.clear()
 
@@ -355,7 +393,7 @@ class MainWindow(QMainWindow):
             f"Detected {len(unique_emojis)} unique emojis in {len(self.emoji_occurrences)} locations"
         )
 
-    def show_icon_selector(self, emoji_card: EmojiCard):
+    def show_icon_selector(self, emoji_card: EmojiCard) -> None:
         """Show icon selector for an emoji card.
 
         Args:
@@ -363,7 +401,7 @@ class MainWindow(QMainWindow):
         """
         # For now, use a simple input dialog
         # In full implementation, this would show a grid of icon suggestions
-        from PySide6.QtWidgets import QInputDialog
+        from PySide6.QtWidgets import QInputDialog  # noqa: PLC0415
 
         # Get suggestions from matcher
         occurrences = [occ for occ in self.emoji_occurrences if occ.emoji == emoji_card.emoji]
@@ -371,7 +409,11 @@ class MainWindow(QMainWindow):
             return
 
         first_occ = occurrences[0]
-        suggestions = self.matcher.find_icon_suggestions(first_occ, limit=10)
+        if self.matcher is None:
+            return
+        suggestions = self.matcher.find_icon_suggestions(
+            first_occ, limit=DEFAULT_ICON_SUGGESTIONS_LIMIT
+        )
 
         if not suggestions:
             QMessageBox.information(
@@ -415,7 +457,7 @@ class MainWindow(QMainWindow):
             self.replace_all_btn.setEnabled(True)
             self.statusBar().showMessage(f"Selected '{icon_name}' for {emoji_card.emoji}")
 
-    def replace_all(self):
+    def replace_all(self) -> None:
         """Replace all emojis with selected icons."""
         if not self.current_file:
             return
@@ -455,8 +497,9 @@ class MainWindow(QMainWindow):
                         )
 
                 # Record selection for learning
-                self.db.record_icon_selection(emoji_char, "default", card.selected_icon)
-                self.db.increment_emoji_usage(emoji_char)
+                if self.db:
+                    self.db.record_icon_selection(emoji_char, "default", card.selected_icon)
+                    self.db.increment_emoji_usage(emoji_char)
 
         # Update preview
         self.preview_text.setPlainText(self.file_handler.get_current_content())
@@ -465,7 +508,7 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, "Success", f"Replaced {count} emoji occurrences with icons!")
         self.statusBar().showMessage(f"Replaced {count} emojis")
 
-    def save_file(self):
+    def save_file(self) -> None:
         """Save the modified file."""
         if not self.current_file:
             return
@@ -492,14 +535,14 @@ class MainWindow(QMainWindow):
                 f"Unexpected error saving file: {e}",
             )
 
-    def show_database_editor(self):
+    def show_database_editor(self) -> None:
         """Show the database editor dialog."""
-        from gui.database_editor import DatabaseEditorDialog
+        from gui.database_editor import DatabaseEditorDialog  # noqa: PLC0415
 
         dialog = DatabaseEditorDialog(self.db, self)
         dialog.exec()
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the icon cache."""
         reply = QMessageBox.question(
             self,
@@ -510,14 +553,20 @@ class MainWindow(QMainWindow):
 
         if reply == QMessageBox.Yes:
             # Clear old sessions
-            self.db.clear_old_sessions(days=0)
+            if self.db:
+                self.db.clear_old_sessions(days=0)
             QMessageBox.information(self, "Success", "Cache cleared successfully!")
 
-    def show_about(self):
-        """Show about dialog."""
-        about_text = """
+    def show_about(self) -> None:
+        """Show the about dialog with application information.
+
+        Displays version, features, and credits in a formatted message box.
+        """
+        from src import __version__  # noqa: PLC0415
+
+        about_text = f"""
         <h2>Replace Markdown Emojis</h2>
-        <p>Version 1.0.0</p>
+        <p>Version {__version__}</p>
         <p>A tool to replace Unicode emojis in markdown files with professional icons.</p>
         <p><b>Features:</b></p>
         <ul>
@@ -531,8 +580,12 @@ class MainWindow(QMainWindow):
         """
         QMessageBox.about(self, "About", about_text)
 
-    def closeEvent(self, event):
-        """Handle window close event."""
+    def closeEvent(self, event) -> None:  # type: ignore[no-untyped-def]
+        """Handle window close event.
+
+        Args:
+            event: Close event from Qt
+        """
         if self.file_handler.has_unsaved_changes():
             reply = QMessageBox.question(
                 self,
@@ -557,3 +610,10 @@ class MainWindow(QMainWindow):
 
         if self.db:
             self.db.close()
+
+    def __del__(self) -> None:
+        """Cleanup when object is destroyed."""
+        # Ensure database is closed even if closeEvent wasn't called
+        if hasattr(self, "db") and self.db:
+            with contextlib.suppress(Exception):
+                self.db.close()

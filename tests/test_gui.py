@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.gui.main_window import EmojiCard, MainWindow
+from src.gui.main_window import EmojiCard
 
 
 @pytest.mark.gui
@@ -33,28 +33,28 @@ class TestEmojiCard:
 class TestMainWindow:
     """Test cases for MainWindow."""
 
-    def test_main_window_creation(self, qt_app):
+    def test_main_window_creation(self, main_window):
         """Test creating the main window."""
-        window = MainWindow()
+        window = main_window
 
         assert window is not None
         assert window.windowTitle() == "Replace Markdown Emojis"
 
-    def test_main_window_initialization(self, qt_app):
+    def test_main_window_initialization(self, main_window):
         """Test that the main window initializes properly."""
-        window = MainWindow()
+        window = main_window
 
         # Check that the window has the expected properties
         assert window.isVisible() is False  # Not shown by default
         assert window.windowTitle() == "Replace Markdown Emojis"
 
-    def test_file_dialog_integration(self, qt_app):
+    def test_file_dialog_integration(self, main_window):
         """Test file dialog functionality."""
-        window = MainWindow()
+        window = main_window
 
         # This would normally open a file dialog, but we can test the method exists
-        assert hasattr(window, "open_file_dialog")
-        assert callable(window.open_file_dialog)
+        assert hasattr(window, "open_file")
+        assert callable(window.open_file)
 
 
 @pytest.mark.gui
@@ -62,9 +62,9 @@ class TestMainWindow:
 class TestGUIIntegration:
     """Integration tests for GUI components."""
 
-    def test_emoji_card_in_main_window(self, qt_app):
+    def test_emoji_card_in_main_window(self, main_window):
         """Test that EmojiCard works within MainWindow."""
-        window = MainWindow()
+        window = main_window
         card = EmojiCard("🎉", "Celebration", 10, window)
 
         assert card.parent() == window

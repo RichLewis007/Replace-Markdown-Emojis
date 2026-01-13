@@ -1,8 +1,8 @@
 # local only files
 docs/
-notes.md
-TODO.md
+local/
 *.code-workspace
+bandit-report.json
 
 # Python
 __pycache__/
@@ -49,5 +49,41 @@ emoji-cache/
 # Testing
 .pytest_cache/
 .coverage
+.coverage.*
+*.cover
+coverage.xml
 htmlcov/
+.tox/
+.hypothesis/
 
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# Linting
+.ruff_cache/
+.bandit/
+
+# Pre-commit
+.pre-commit/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Merge and patch files
+*.orig
+*.rej
+
+# Temporary files
+*.tmp
+*.temp
+*.pdb
+*.prof
+.ipynb_checkpoints/
+
+# OS
+Thumbs.db

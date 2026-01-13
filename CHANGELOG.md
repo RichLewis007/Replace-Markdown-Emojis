@@ -57,6 +57,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🔒 Security Improvements
+- **Migrated from Safety to pip-audit** - Replaced Safety CLI with open-source pip-audit for dependency vulnerability scanning
+  - No API key required
+  - Uses official Python Packaging Advisory Database (PyPA)
+  - Simpler setup and better integration
+- **Fixed filelock vulnerability (CVE-2025-68146)** - Upgraded filelock from 3.20.0 to 3.20.3
+- **Fixed urllib3 vulnerabilities** - Added urllib3>=2.6.0 constraint to fix CVE-2025-66471 and CVE-2025-66418
+
+### 🐛 Bug Fixes
+- Fixed type annotation issues in `dev.py`, `replace-emojis.py`, and other modules
+- Fixed ambiguous variable name in `dev.py` (changed `l` to `line`)
+- Moved lazy import to top-level in `src/gui/main_window.py`
+- Fixed return type annotation in `src/emoji_detector.py`
+- Fixed parameter type annotation in `src/icon_library_manager.py`
+
+### 📝 Code Quality
+- Added missing type annotations to all functions
+- Improved code consistency and type safety
+- Updated pre-commit hooks configuration
+
+---
+
 ## [1.1.0] - 2025-01-27
 
 ### 🚀 Modern Development Stack Migration
@@ -74,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MyPy** - Static type checking with strict configuration
 - **isort** - Import sorting with black compatibility
 - **Bandit** - Security vulnerability scanning
-- **Safety** - Dependency security checking
+- **pip-audit** - Dependency vulnerability scanning (open source)
 - **Pre-commit** - Git hooks for automated quality checks
 
 #### 🧪 Testing Infrastructure
@@ -89,7 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GitHub Actions** - Multi-platform CI/CD pipeline
 - **Multi-OS testing** - Ubuntu, Windows, macOS
 - **Multi-Python testing** - Python 3.11 & 3.12
-- **Automated security scanning** - Bandit and Safety integration
+- **Automated security scanning** - Bandit and pip-audit integration
 - **Coverage reporting** - Codecov integration
 - **Build artifacts** - Automated package building
 
@@ -144,7 +168,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Icon Library API Integration
 - ✅ **IconLibraryManager** - Complete icon management system
 - ✅ **Iconify Integration** - Access to 200,000+ icons from 100+ collections
-- ✅ **Simple Icons Integration** - 3000+ brand logos  
+- ✅ **Simple Icons Integration** - 3000+ brand logos
 - ✅ **Icon Selector Dialog** - Beautiful grid-based icon browser
 - ✅ **Caching System** - Smart local caching with metadata
 - ✅ **Comprehensive Tests** - 18 test cases, all passing
@@ -159,6 +183,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ✅ **Constants Module** - All magic numbers replaced with named constants
 - ✅ **Specific Exception Handling** - Custom exception classes with detailed error information
 - ✅ **Import Organization** - All imports reorganized following PEP 8 standards
+- ✅ **Deprecation Warnings Fixed** - Removed deprecated Qt attributes for clean startup
 - ✅ **83% Code Coverage** - Icon library module fully tested
 - ✅ **Zero Linting Errors** - For type annotation modernization
 
@@ -173,12 +198,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🐛 Known Issues
 - Some linting issues remain (magic numbers, trailing whitespace)
 - GUI testing requires display server (headless testing planned)
-- Import organization needs refinement in some modules
 
 ### 🔧 Technical Debt
-- ✅ All magic numbers converted to constants (Complete!)
-- ✅ Exception handling made specific with custom exception classes (Complete!)
-- ✅ Import statements reorganized following PEP 8 standards (Complete!)
+
 
 ---
 

@@ -3,12 +3,10 @@
 Author: Rich Lewis
 """
 
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 from src.icon_library_manager import (
     IconifyLibrary,
-    IconLibrary,
     IconLibraryManager,
     IconMetadata,
     SimpleIconsLibrary,
@@ -283,7 +281,7 @@ class TestIconLibraryManager:
         manager = IconLibraryManager(tmp_path)
 
         # Create some cached files
-        for lib_name, library in manager.libraries.items():
+        for _lib_name, library in manager.libraries.items():
             test_file = library.cache_dir / "test.svg"
             test_file.write_text("<svg></svg>")
 

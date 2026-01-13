@@ -2,23 +2,32 @@
 
 # Standard library
 import json
+import logging
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Self
 
 # Local imports
-from src.exceptions import (
-    DatabaseConnectionError,
-    DatabaseError,
-    DatabaseQueryError,
-    ValidationError,
+from src.constants import (
+    DEFAULT_SEARCH_RESULTS_LIMIT,
+    DEFAULT_SESSION_RETENTION_DAYS,
+    SECONDS_PER_DAY,
 )
+from src.exceptions import (
+    DatabaseError,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class EmojiDatabase:
     """Manages the SQLite database for emoji mappings and session tracking."""
 
-    def __init__(self, db_path: str = "./emoji-cache/emojis.db"):
+    def __init__(self, db_path: str = "./emoji-cache/emojis.db") -> None:
         """Initialize database connection and create tables if needed.
 
         Args:
@@ -30,7 +39,7 @@ class EmojiDatabase:
         self.conn.row_factory = sqlite3.Row
         self._create_tables()
 
-    def _create_tables(self):
+    def _create_tables(self) -> None:
         """Create all necessary database tables."""
         cursor = self.conn.cursor()
 
@@ -109,8 +118,12 @@ class EmojiDatabase:
         self.conn.commit()
 
     def add_emoji(
-        self, unicode: str, common_name: str, keywords: list[str], context_words: list[str] = None
-    ) -> bool:
+        self,
+        unicode: str,
+        common_name: str,
+        keywords: list[str],
+        context_words: list[str] | None = None,
+    ) -> None:
         """Add a new emoji to the database.
 
         Args:
@@ -119,14 +132,14 @@ class EmojiDatabase:
             keywords: List of keywords associated with emoji
             context_words: Optional list of context words
 
-        Returns:
-            True if successful, False otherwise
+        Raises:
+            DatabaseError: If the emoji cannot be added to the database
         """
         try:
             cursor = self.conn.cursor()
             cursor.execute(
                 """
-                INSERT OR REPLACE INTO emojis 
+                INSERT OR REPLACE INTO emojis
                 (unicode, common_name, keywords, context_words, usage_count, last_used)
                 VALUES (?, ?, ?, ?, 0, NULL)
             """,
@@ -138,18 +151,23 @@ class EmojiDatabase:
                 ),
             )
             self.conn.commit()
-            return True
         except sqlite3.IntegrityError as e:
-            print(f"Database integrity error adding emoji: {e}")
-            return False
+            logger.error(f"Database integrity error adding emoji: {e}", exc_info=True)
+            raise DatabaseError(
+                f"Failed to add emoji due to integrity constraint: {e}", details=str(e)
+            ) from e
         except sqlite3.OperationalError as e:
-            print(f"Database operation error adding emoji: {e}")
-            return False
+            logger.error(f"Database operation error adding emoji: {e}", exc_info=True)
+            raise DatabaseError(
+                f"Failed to add emoji due to operational error: {e}", details=str(e)
+            ) from e
         except Exception as e:
-            print(f"Unexpected error adding emoji: {e}")
-            return False
+            logger.error(f"Unexpected error adding emoji: {e}", exc_info=True)
+            raise DatabaseError(f"Unexpected error adding emoji: {e}", details=str(e)) from e
 
-    def search_emojis_by_keywords(self, search_terms: list[str], limit: int = 10) -> list[dict]:
+    def search_emojis_by_keywords(
+        self, search_terms: list[str], limit: int = DEFAULT_SEARCH_RESULTS_LIMIT
+    ) -> list[dict]:
         """Search for emojis matching any of the search terms.
 
         Args:
@@ -215,15 +233,15 @@ class EmojiDatabase:
             for row in rows
         ]
 
-    def update_emoji_keywords(self, unicode: str, keywords: list[str]) -> bool:
+    def update_emoji_keywords(self, unicode: str, keywords: list[str]) -> None:
         """Update keywords for an emoji.
 
         Args:
             unicode: Unicode representation of emoji
             keywords: New list of keywords
 
-        Returns:
-            True if successful, False otherwise
+        Raises:
+            DatabaseError: If the keywords cannot be updated
         """
         try:
             cursor = self.conn.cursor()
@@ -231,42 +249,50 @@ class EmojiDatabase:
                 "UPDATE emojis SET keywords = ? WHERE unicode = ?", (json.dumps(keywords), unicode)
             )
             self.conn.commit()
-            return True
         except sqlite3.IntegrityError as e:
-            print(f"Database integrity error updating emoji keywords: {e}")
-            return False
+            logger.error(f"Database integrity error updating emoji keywords: {e}", exc_info=True)
+            raise DatabaseError(
+                f"Failed to update emoji keywords due to integrity constraint: {e}", details=str(e)
+            ) from e
         except sqlite3.OperationalError as e:
-            print(f"Database operation error updating emoji keywords: {e}")
-            return False
+            logger.error(f"Database operation error updating emoji keywords: {e}", exc_info=True)
+            raise DatabaseError(
+                f"Failed to update emoji keywords due to operational error: {e}", details=str(e)
+            ) from e
         except Exception as e:
-            print(f"Unexpected error updating emoji keywords: {e}")
-            return False
+            logger.error(f"Unexpected error updating emoji keywords: {e}", exc_info=True)
+            raise DatabaseError(
+                f"Unexpected error updating emoji keywords: {e}", details=str(e)
+            ) from e
 
-    def delete_emoji(self, unicode: str) -> bool:
+    def delete_emoji(self, unicode: str) -> None:
         """Delete an emoji from the database.
 
         Args:
             unicode: Unicode representation of emoji
 
-        Returns:
-            True if successful, False otherwise
+        Raises:
+            DatabaseError: If the emoji cannot be deleted
         """
         try:
             cursor = self.conn.cursor()
             cursor.execute("DELETE FROM emojis WHERE unicode = ?", (unicode,))
             self.conn.commit()
-            return True
         except sqlite3.IntegrityError as e:
-            print(f"Database integrity error deleting emoji: {e}")
-            return False
+            logger.error(f"Database integrity error deleting emoji: {e}", exc_info=True)
+            raise DatabaseError(
+                f"Failed to delete emoji due to integrity constraint: {e}", details=str(e)
+            ) from e
         except sqlite3.OperationalError as e:
-            print(f"Database operation error deleting emoji: {e}")
-            return False
+            logger.error(f"Database operation error deleting emoji: {e}", exc_info=True)
+            raise DatabaseError(
+                f"Failed to delete emoji due to operational error: {e}", details=str(e)
+            ) from e
         except Exception as e:
-            print(f"Unexpected error deleting emoji: {e}")
-            return False
+            logger.error(f"Unexpected error deleting emoji: {e}", exc_info=True)
+            raise DatabaseError(f"Unexpected error deleting emoji: {e}", details=str(e)) from e
 
-    def increment_emoji_usage(self, unicode: str):
+    def increment_emoji_usage(self, unicode: str) -> None:
         """Increment usage count for an emoji.
 
         Args:
@@ -275,7 +301,7 @@ class EmojiDatabase:
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            UPDATE emojis 
+            UPDATE emojis
             SET usage_count = usage_count + 1, last_used = ?
             WHERE unicode = ?
         """,
@@ -301,9 +327,12 @@ class EmojiDatabase:
             (document_path, datetime.now().isoformat()),
         )
         self.conn.commit()
-        return cursor.lastrowid
+        session_id = cursor.lastrowid
+        if session_id is None:
+            raise DatabaseError("Failed to create document session")
+        return session_id
 
-    def end_document_session(self, session_id: int):
+    def end_document_session(self, session_id: int) -> None:
         """End a document session.
 
         Args:
@@ -312,7 +341,7 @@ class EmojiDatabase:
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            UPDATE document_sessions 
+            UPDATE document_sessions
             SET session_end = ?
             WHERE id = ?
         """,
@@ -327,7 +356,7 @@ class EmojiDatabase:
         icon_name: str,
         context_text: str,
         line_number: int,
-    ):
+    ) -> None:
         """Record icon usage in current session for duplicate detection.
 
         Args:
@@ -340,7 +369,7 @@ class EmojiDatabase:
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            INSERT INTO session_icon_usage 
+            INSERT INTO session_icon_usage
             (session_id, emoji_unicode, icon_name, context_text, line_number, is_replaced)
             VALUES (?, ?, ?, ?, ?, 1)
         """,
@@ -348,7 +377,7 @@ class EmojiDatabase:
         )
         self.conn.commit()
 
-    def get_session_icon_usages(self, session_id: int, icon_name: str = None) -> list[dict]:
+    def get_session_icon_usages(self, session_id: int, icon_name: str | None = None) -> list[dict]:
         """Get all icon usages for a session, optionally filtered by icon name.
 
         Args:
@@ -362,7 +391,7 @@ class EmojiDatabase:
         if icon_name:
             cursor.execute(
                 """
-                SELECT * FROM session_icon_usage 
+                SELECT * FROM session_icon_usage
                 WHERE session_id = ? AND icon_name = ?
             """,
                 (session_id, icon_name),
@@ -382,7 +411,7 @@ class EmojiDatabase:
             for row in rows
         ]
 
-    def record_icon_selection(self, emoji_unicode: str, library_name: str, icon_name: str):
+    def record_icon_selection(self, emoji_unicode: str, library_name: str, icon_name: str) -> None:
         """Record user's icon selection for learning.
 
         Args:
@@ -448,20 +477,20 @@ class EmojiDatabase:
         row = cursor.fetchone()
         return row["icon_name"] if row else None
 
-    def clear_old_sessions(self, days: int = 30):
+    def clear_old_sessions(self, days: int = DEFAULT_SESSION_RETENTION_DAYS) -> None:
         """Clear document sessions older than specified days.
 
         Args:
             days: Number of days to keep
         """
         cursor = self.conn.cursor()
-        cutoff_date = datetime.now().timestamp() - (days * 24 * 60 * 60)
+        cutoff_date = datetime.now().timestamp() - (days * SECONDS_PER_DAY)
 
         cursor.execute(
             """
-            DELETE FROM session_icon_usage 
+            DELETE FROM session_icon_usage
             WHERE session_id IN (
-                SELECT id FROM document_sessions 
+                SELECT id FROM document_sessions
                 WHERE session_start < ?
             )
         """,
@@ -475,15 +504,32 @@ class EmojiDatabase:
 
         self.conn.commit()
 
-    def close(self):
+    def close(self) -> None:
         """Close the database connection."""
         if self.conn:
             self.conn.close()
 
-    def __enter__(self):
-        """Context manager entry."""
+    def __enter__(self) -> "Self":
+        """Context manager entry.
+
+        Returns:
+            The database instance for use in a with statement.
+        """
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit."""
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object | None,
+    ) -> None:
+        """Context manager exit.
+
+        Ensures the database connection is closed when exiting the context.
+
+        Args:
+            exc_type: Exception type if an exception occurred
+            exc_val: Exception value if an exception occurred
+            exc_tb: Exception traceback if an exception occurred
+        """
         self.close()

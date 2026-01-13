@@ -9,6 +9,8 @@ dependencies = [
     "markdown>=3.5",
     "emoji>=2.10.0",
     "requests>=2.31.0",
+    "urllib3>=2.6.0,<3.0",  # Fixes CVE-2025-66471 and CVE-2025-66418
+    "filelock>=3.20.1",  # Fixes CVE-2025-68146
     "Pillow>=10.2.0",
     "beautifulsoup4>=4.12.0",
     "lxml>=5.1.0",
@@ -59,6 +61,8 @@ ignore = [
     "PLR0912", # too many branches
     "PLR0915", # too many statements
 ]
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["PLR2004"]  # Magic numbers are fine in test assertions
 
 [tool.mypy]
 python_version = "3.11"
@@ -74,6 +78,29 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
+
+# Ignore missing imports for libraries without stubs
+[[tool.mypy.overrides]]
+module = [
+    "fuzzywuzzy.*",
+    "PySide6.*",
+    "requests.*",
+]
+ignore_missing_imports = true
+
+# Suppress PySide6 attribute errors in GUI files (stubs are incomplete)
+[[tool.mypy.overrides]]
+module = [
+    "src.gui.*",
+]
+ignore_errors = true
+
+# Be less strict on test files
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+]
+disallow_untyped_defs = false
 
 [tool.isort]
 profile = "black"
@@ -120,10 +147,9 @@ dev = [
     "mypy>=1.8.0",
     "pre-commit>=3.6.0",
     "bandit>=1.7.5",
-    "safety>=2.3.5",
+    "pip-audit>=2.6.0",
     "isort>=5.13.0",
 ]
 
 [project.scripts]
-replace-emojis = "replace_emojis:main"
-
+replace-emojis = "src.__main__:main"

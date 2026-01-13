@@ -1,19 +1,32 @@
 """Database initialization script with 200+ curated emoji entries."""
 
+# Standard library
+import logging
+from pathlib import Path
+
 # Local imports
-from database import EmojiDatabase
+from src.database import EmojiDatabase
+
+logger = logging.getLogger(__name__)
 
 
-def initialize_database(db_path: str = "./emoji-cache/emojis.db"):
+def initialize_database(db_path: str | None = None) -> int:
     """Initialize the emoji database with comprehensive emoji-keyword mappings.
 
     This includes 200+ manually curated emojis organized by category,
     supporting many-to-many keyword mapping where multiple emojis can share keywords.
 
     Args:
-        db_path: Path to the SQLite database file
+        db_path: Path to the SQLite database file. If None, uses default from constants.
     """
-    print("Initializing emoji database...")
+    from src.constants import CACHE_DIR_NAME, DB_FILENAME  # noqa: PLC0415
+
+    if db_path is None:
+        cache_dir = Path(CACHE_DIR_NAME)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        db_path = str(cache_dir / DB_FILENAME)
+
+    logger.info("Initializing emoji database...")
     db = EmojiDatabase(db_path)
 
     emojis_to_add = [
@@ -632,7 +645,7 @@ def initialize_database(db_path: str = "./emoji-cache/emojis.db"):
         ("🐞", "ladybug", ["ladybug", "bug", "issue", "error", "cute-bug", "problem"]),
         # === INFORMATION & TIPS ===
         (
-            "ℹ️",
+            "ℹ️",  # noqa: RUF001
             "information",
             [
                 "information",
@@ -1836,11 +1849,14 @@ def initialize_database(db_path: str = "./emoji-cache/emojis.db"):
 
     count = 0
     for unicode, common_name, keywords in emojis_to_add:
-        if db.add_emoji(unicode, common_name, keywords):
+        try:
+            db.add_emoji(unicode, common_name, keywords)
             count += 1
+        except Exception as e:
+            logger.warning(f"Failed to add emoji {unicode}: {e}")
 
-    print(f"Successfully added {count} emojis to the database!")
-    print(f"Database location: {db_path}")
+    logger.info(f"Successfully added {count} emojis to the database!")
+    logger.info(f"Database location: {db_path}")
 
     db.close()
     return count

@@ -15,25 +15,38 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
+    QWidget,
 )
 
 # Local imports
-from database import EmojiDatabase
+from src.constants import (
+    DATABASE_EDITOR_HEIGHT,
+    DATABASE_EDITOR_WIDTH,
+    DATABASE_TABLE_COLUMN_COUNT,
+    MAX_KEYWORD_DISPLAY,
+)
+from src.database import EmojiDatabase
 
 
 class DatabaseEditorDialog(QDialog):
     """Dialog for viewing and editing the emoji database."""
 
-    def __init__(self, db: EmojiDatabase, parent=None):
+    def __init__(self, db: EmojiDatabase, parent: QWidget | None = None) -> None:
+        """Initialize the database editor dialog.
+
+        Args:
+            db: EmojiDatabase instance to edit
+            parent: Parent widget (optional)
+        """
         super().__init__(parent)
         self.db = db
         self.setWindowTitle("Manage Emoji Database")
-        self.resize(1000, 600)
+        self.resize(DATABASE_EDITOR_WIDTH, DATABASE_EDITOR_HEIGHT)
 
         self.setup_ui()
         self.load_data()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -50,7 +63,7 @@ class DatabaseEditorDialog(QDialog):
         # Toolbar
         toolbar_layout = QHBoxLayout()
 
-        self.add_btn = QPushButton("➕ Add New")
+        self.add_btn = QPushButton("➕ Add New")  # noqa: RUF001
         self.add_btn.clicked.connect(self.add_emoji)
         toolbar_layout.addWidget(self.add_btn)
 
@@ -72,7 +85,7 @@ class DatabaseEditorDialog(QDialog):
 
         # Table
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
+        self.table.setColumnCount(DATABASE_TABLE_COLUMN_COUNT)
         self.table.setHorizontalHeaderLabels(
             ["Emoji", "Unicode", "Common Name", "Keywords", "Usage Count"]
         )
@@ -95,7 +108,7 @@ class DatabaseEditorDialog(QDialog):
 
         layout.addLayout(button_layout)
 
-    def load_data(self):
+    def load_data(self) -> None:
         """Load data from database and populate table."""
         emojis = self.db.get_all_emojis()
 
@@ -117,9 +130,8 @@ class DatabaseEditorDialog(QDialog):
             # Common name
             self.table.setItem(row, 2, QTableWidgetItem(emoji_data["common_name"]))
 
-            # Keywords (truncated)
-            keywords = ", ".join(emoji_data["keywords"][:5])
-            if len(emoji_data["keywords"]) > 5:
+            keywords = ", ".join(emoji_data["keywords"][:MAX_KEYWORD_DISPLAY])
+            if len(emoji_data["keywords"]) > MAX_KEYWORD_DISPLAY:
                 keywords += "..."
             self.table.setItem(row, 3, QTableWidgetItem(keywords))
 
@@ -130,7 +142,7 @@ class DatabaseEditorDialog(QDialog):
 
         self.info_label.setText(f"Total: {len(emojis)} emojis")
 
-    def filter_table(self):
+    def filter_table(self) -> None:
         """Filter table based on search input."""
         search_text = self.search_input.text().lower()
 
@@ -146,7 +158,7 @@ class DatabaseEditorDialog(QDialog):
 
             self.table.setRowHidden(row, not match)
 
-    def add_emoji(self):
+    def add_emoji(self) -> None:
         """Add a new emoji to the database."""
         # Get emoji
         emoji, ok = QInputDialog.getText(self, "Add Emoji", "Enter emoji character:")
@@ -168,13 +180,14 @@ class DatabaseEditorDialog(QDialog):
         keywords = [k.strip() for k in keywords_text.split(",")]
 
         # Add to database
-        if self.db.add_emoji(emoji, name, keywords):
+        try:
+            self.db.add_emoji(emoji, name, keywords)
             QMessageBox.information(self, "Success", "Emoji added successfully!")
             self.load_data()
-        else:
-            QMessageBox.critical(self, "Error", "Failed to add emoji.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to add emoji: {e}")
 
-    def edit_emoji(self):
+    def edit_emoji(self) -> None:
         """Edit selected emoji."""
         current_row = self.table.currentRow()
         if current_row < 0:
@@ -203,21 +216,24 @@ class DatabaseEditorDialog(QDialog):
 
         if ok and keywords_text:
             keywords = [k.strip() for k in keywords_text.split(",")]
-            if self.db.update_emoji_keywords(emoji, keywords):
+            try:
+                self.db.update_emoji_keywords(emoji, keywords)
                 QMessageBox.information(self, "Success", "Keywords updated successfully!")
                 self.load_data()
-            else:
-                QMessageBox.critical(self, "Error", "Failed to update keywords.")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to update keywords: {e}")
 
-    def delete_emoji(self):
+    def delete_emoji(self) -> None:
         """Delete selected emoji."""
         current_row = self.table.currentRow()
         if current_row < 0:
             QMessageBox.warning(self, "No Selection", "Please select an emoji to delete.")
             return
 
-        emoji = self.table.item(current_row, 0).text()
-        name = self.table.item(current_row, 2).text()
+        emoji_item = self.table.item(current_row, 0)
+        name_item = self.table.item(current_row, 2)
+        emoji = emoji_item.text() if emoji_item is not None else ""
+        name = name_item.text() if name_item is not None else ""
 
         reply = QMessageBox.question(
             self,
@@ -227,8 +243,9 @@ class DatabaseEditorDialog(QDialog):
         )
 
         if reply == QMessageBox.Yes:
-            if self.db.delete_emoji(emoji):
+            try:
+                self.db.delete_emoji(emoji)
                 QMessageBox.information(self, "Success", "Emoji deleted successfully!")
                 self.load_data()
-            else:
-                QMessageBox.critical(self, "Error", "Failed to delete emoji.")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to delete emoji: {e}")

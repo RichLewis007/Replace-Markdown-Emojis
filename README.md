@@ -46,7 +46,7 @@ uv run python replace-emojis.py
 uv sync --dev
 
 # Install pre-commit hooks (recommended)
-python dev.py install
+uv run dev.py install
 
 # Development workflow
 uv run black .          # Format code
@@ -58,14 +58,14 @@ uv run pytest          # Run tests
 uv run pytest -m gui    # Run GUI tests only
 
 # Or use the development helper script
-python dev.py all       # Run all development tasks
-python dev.py format    # Format and sort imports
-python dev.py lint      # Lint code
-python dev.py type-check # Type checking
-python dev.py security  # Security checks
-python dev.py test      # Run tests
-python dev.py test-gui  # Run GUI tests only
-python dev.py install   # Install pre-commit hooks
+uv run dev.py all       # Run all development tasks
+uv run dev.py format    # Format and sort imports
+uv run dev.py lint      # Lint code
+uv run dev.py type-check # Type checking
+uv run dev.py security  # Security checks
+uv run dev.py test      # Run tests
+uv run dev.py test-gui  # Run GUI tests only
+uv run dev.py install   # Install pre-commit hooks
 ```
 
 ### Code Quality Tools
@@ -76,7 +76,7 @@ This project uses modern Python development tools:
 - **🔧 Ruff** - Fast linting and import sorting
 - **🔍 MyPy** - Static type checking
 - **🛡️ Bandit** - Security vulnerability scanning
-- **🔒 Safety** - Dependency security checking
+- **🔒 pip-audit** - Dependency vulnerability scanning (open source)
 - **🧪 Pytest** - Testing framework with GUI support
 - **📊 Coverage** - Test coverage reporting
 - **🪝 Pre-commit** - Git hooks for code quality
@@ -86,8 +86,9 @@ This project uses modern Python development tools:
 See [CHANGELOG.md](CHANGELOG.md) for detailed information about all changes, improvements, and new features.
 
 ### Recent Updates (v1.1.0)
+
 - 🚀 **Modernized to `uv`** - 10x faster dependency management
-- 🛠️ **Enhanced development tools** - Black, Ruff, MyPy, Bandit, Safety
+- 🛠️ **Enhanced development tools** - Black, Ruff, MyPy, Bandit, pip-audit
 - 🧪 **Comprehensive testing** - pytest with GUI testing support
 - 🔄 **CI/CD pipeline** - GitHub Actions with multi-platform testing
 - 🛡️ **Security scanning** - Automated vulnerability detection
@@ -108,25 +109,26 @@ pip install PySide6>=6.6.0 markdown>=3.5 emoji>=2.10.0 requests>=2.31.0 \
 This project follows **2025 Python development best practices** with:
 
 - **📦 `uv` Package Management** - 10x faster than pip
-- **🛠️ Comprehensive Tooling** - Black, Ruff, MyPy, Bandit, Safety
+- **🛠️ Comprehensive Tooling** - Black, Ruff, MyPy, Bandit, pip-audit
 - **🧪 Advanced Testing** - pytest with GUI testing support
 - **🔄 CI/CD Pipeline** - GitHub Actions with multi-platform testing
 - **🛡️ Security Scanning** - Automated vulnerability detection
 - **📚 Professional Documentation** - Modern development practices
 
 ### Development Workflow
+
 ```bash
 # One-command setup
-uv sync --dev && python dev.py install
+uv sync --dev && uv run dev.py install
 
 # Quality assurance
-python dev.py all  # Run all quality checks
+uv run dev.py all  # Run all quality checks
 
 # Individual tasks
-python dev.py format    # Format code
-python dev.py lint      # Lint code  
-python dev.py test      # Run tests
-python dev.py security  # Security checks
+uv run dev.py format    # Format code
+uv run dev.py lint      # Lint code
+uv run dev.py test      # Run tests
+uv run dev.py security  # Security checks
 ```
 
 ## 🚀 Quick Start
@@ -134,12 +136,13 @@ python dev.py security  # Security checks
 ### Run the Application
 
 ```bash
-python replace-emojis.py
+uv run python replace-emojis.py
 ```
 
 ### First Run
 
 On first run, the application will:
+
 1. Create `./emoji-cache/` directory
 2. Initialize database with 200+ curated emoji entries
 3. Display the main window
@@ -157,6 +160,7 @@ On first run, the application will:
 ### Emoji Detection
 
 The application automatically detects:
+
 - ✅ Emojis in headings (# Heading with 🚀)
 - ✅ Emojis in body text
 - ✅ Multiple occurrences of the same emoji
@@ -165,6 +169,7 @@ The application automatically detects:
 ### Icon Selection
 
 When selecting an icon:
+
 - **Top suggestions** are based on context keywords
 - **Learned preferences** appear first if you've used this emoji before
 - **Match score** indicates relevance
@@ -173,6 +178,7 @@ When selecting an icon:
 ### Duplicate Detection
 
 The application warns you when:
+
 - ⚠️ Same icon selected for different concepts
 - Example: Using "rocket" for both "Launch App" and "Security Settings"
 - Similarity threshold: 50% (configurable)
@@ -183,6 +189,7 @@ The application warns you when:
 Access via **Tools → Manage Emoji Database**
 
 Features:
+
 - 📋 View all 200+ emoji entries
 - 🔍 Search by emoji, name, or keywords
 - ➕ Add new emoji mappings
@@ -308,7 +315,7 @@ ruff check src/
 ### Building from Source
 
 ```bash
-python -m build
+uv run python -m build
 ```
 
 ## 🔧 Configuration
@@ -352,14 +359,16 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📋 Changelog & Updates
 
 ### Recent Updates (v1.1.0)
+
 - 🚀 **Modernized to `uv`** - 10x faster dependency management
-- 🛠️ **Enhanced development tools** - Black, Ruff, MyPy, Bandit, Safety
+- 🛠️ **Enhanced development tools** - Black, Ruff, MyPy, Bandit, pip-audit
 - 🧪 **Comprehensive testing** - pytest with GUI testing support
 - 🔄 **CI/CD pipeline** - GitHub Actions with multi-platform testing
 - 🛡️ **Security scanning** - Automated vulnerability detection
 - 📚 **Modern documentation** - Updated with 2025 best practices
 
 ### Full Changelog
+
 See [CHANGELOG.md](CHANGELOG.md) for detailed information about all changes, improvements, and new features since the project began.
 
 ## 📝 License
@@ -403,5 +412,5 @@ For questions or feedback, please open an issue on GitHub.
 
 ---
 
-**Author:** Rich Lewis  
+**Author:** Rich Lewis
 Made with ❤️ using Python and PySide6

@@ -1,9 +1,12 @@
 """Pytest configuration and fixtures."""
 
+import gc
 from unittest.mock import Mock
 
 import pytest
 from PySide6.QtWidgets import QApplication
+
+from src.gui.main_window import MainWindow
 
 
 @pytest.fixture(scope="session")
@@ -56,3 +59,25 @@ def mock_database():
         "⭐": ["star", "favorite", "rating"],
     }
     return mock_db
+
+
+@pytest.fixture(autouse=True)
+def cleanup_databases():
+    """Automatically close database connections after each test."""
+    yield
+    # Force garbage collection to close any remaining database connections
+    gc.collect()
+
+
+@pytest.fixture
+def main_window(qt_app):  # noqa: ARG001
+    """Create a MainWindow instance that's properly cleaned up.
+
+    Args:
+        qt_app: QApplication fixture (required for MainWindow initialization)
+    """
+    window = MainWindow()
+    yield window
+    # Ensure database is closed when test finishes
+    if window.db:
+        window.db.close()

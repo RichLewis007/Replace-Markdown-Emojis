@@ -14,22 +14,20 @@ from pathlib import Path
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from gui.main_window import MainWindow
+from gui.main_window import MainWindow  # noqa: E402
 
 
-def main():
+def main() -> None:
     """Main entry point for the application."""
-    # Enable high DPI scaling
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-
     # Create application
     app = QApplication(sys.argv)
     app.setApplicationName("Replace Markdown Emojis")
     app.setOrganizationName("RichDev")
+
+    # Note: High DPI scaling is now handled automatically by Qt6
+    # The deprecated attributes are no longer needed
 
     # Create and show main window
     window = MainWindow()

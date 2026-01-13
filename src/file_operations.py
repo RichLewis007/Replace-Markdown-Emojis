@@ -5,17 +5,17 @@ import shutil
 from pathlib import Path
 
 # Local imports
-from src.exceptions import FileBackupError, FileOperationError, FileReadError, FileWriteError
+from src.exceptions import FileBackupError, FileReadError, FileWriteError
 
 
 class MarkdownFileHandler:
     """Handles markdown file operations including backup and replacement."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the file handler."""
-        self.current_file = None
-        self.original_content = None
-        self.modified_content = None
+        self.current_file: str | None = None
+        self.original_content: str | None = None
+        self.modified_content: str | None = None
 
     def load_file(self, file_path: str) -> str:
         """Load a markdown file.
@@ -35,7 +35,7 @@ class MarkdownFileHandler:
             raise FileNotFoundError(f"File not found: {file_path}")
 
         try:
-            with open(path, encoding="utf-8") as f:
+            with path.open(encoding="utf-8") as f:
                 content = f.read()
 
             self.current_file = str(path.absolute())
@@ -67,7 +67,9 @@ class MarkdownFileHandler:
                 details=str(e),
             ) from e
 
-    def replace_emoji_with_icon(self, emoji: str, icon_path: str, alt_text: str = None) -> int:
+    def replace_emoji_with_icon(
+        self, emoji: str, icon_path: str, alt_text: str | None = None
+    ) -> int:
         """Replace all occurrences of an emoji with markdown image syntax.
 
         Args:
@@ -96,7 +98,12 @@ class MarkdownFileHandler:
         return count
 
     def replace_emoji_at_position(
-        self, line_number: int, char_position: int, emoji: str, icon_path: str, alt_text: str = None
+        self,
+        line_number: int,
+        char_position: int,
+        emoji: str,
+        icon_path: str,
+        alt_text: str | None = None,
     ) -> bool:
         """Replace a specific emoji occurrence at given position.
 
@@ -125,7 +132,7 @@ class MarkdownFileHandler:
             return False
 
         # Check if emoji is at the position
-        if not line[char_position : char_position + len(emoji)] == emoji:
+        if line[char_position : char_position + len(emoji)] != emoji:
             return False
 
         # Create markdown image syntax
@@ -138,7 +145,7 @@ class MarkdownFileHandler:
         self.modified_content = "\n".join(lines)
         return True
 
-    def save_file(self, file_path: str = None, create_backup: bool = True) -> bool:
+    def save_file(self, file_path: str | None = None, create_backup: bool = True) -> bool:
         """Save the modified content to file.
 
         Args:
@@ -166,7 +173,9 @@ class MarkdownFileHandler:
                 shutil.copy2(path, backup_path)
 
             # Write modified content
-            with open(path, "w", encoding="utf-8") as f:
+            if self.modified_content is None:
+                raise ValueError("No content to save")
+            with path.open("w", encoding="utf-8") as f:
                 f.write(self.modified_content)
 
             return True
@@ -213,7 +222,7 @@ class MarkdownFileHandler:
         """
         return self.original_content or ""
 
-    def reset_changes(self):
+    def reset_changes(self) -> None:
         """Reset modified content to original."""
         self.modified_content = self.original_content
 
@@ -229,7 +238,7 @@ class MarkdownFileHandler:
 class IconFileManager:
     """Manages icon files and directories."""
 
-    def __init__(self, base_path: str = "./assets/icons"):
+    def __init__(self, base_path: str = "./assets/icons") -> None:
         """Initialize icon file manager.
 
         Args:
@@ -237,7 +246,7 @@ class IconFileManager:
         """
         self.base_path = Path(base_path)
 
-    def ensure_directory_exists(self):
+    def ensure_directory_exists(self) -> None:
         """Create the icon directory if it doesn't exist."""
         self.base_path.mkdir(parents=True, exist_ok=True)
 
@@ -344,7 +353,7 @@ class IconFileManager:
 
         return sorted(icons)
 
-    def delete_icon(self, icon_name: str, extension: str = None) -> bool:
+    def delete_icon(self, icon_name: str, extension: str | None = None) -> bool:
         """Delete an icon file.
 
         Args:

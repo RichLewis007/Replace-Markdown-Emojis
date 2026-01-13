@@ -5,6 +5,7 @@ Author: Rich Lewis
 
 # Standard library
 import json
+import logging
 import shutil
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -12,16 +13,17 @@ from pathlib import Path
 
 # Third-party
 import requests
-from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 # Local imports
-from src.constants import (
+from src.constants import (  # noqa: E402
     API_TIMEOUT_SECONDS,
     DEFAULT_SEARCH_LIMIT,
     ICONIFY_BASE_URL,
     SIMPLE_ICONS_CDN_URL,
 )
-from src.exceptions import (
+from src.exceptions import (  # noqa: E402
     APIError,
     IconDownloadError,
     IconSearchError,
@@ -47,7 +49,7 @@ class IconMetadata:
 class IconLibrary(ABC):
     """Abstract base class for icon libraries."""
 
-    def __init__(self, cache_dir: Path):
+    def __init__(self, cache_dir: Path) -> None:
         """Initialize the icon library.
 
         Args:
@@ -61,7 +63,14 @@ class IconLibrary(ABC):
 
     @abstractmethod
     def get_library_name(self) -> str:
-        """Get the name of this icon library."""
+        """Get the name of this icon library.
+
+        Returns:
+            The name of the icon library as a string
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses
+        """
         pass
 
     @abstractmethod
@@ -91,7 +100,10 @@ class IconLibrary(ABC):
         pass
 
     def _load_metadata(self) -> None:
-        """Load metadata from cache."""
+        """Load icon metadata from the cache file.
+
+        If the metadata file doesn't exist or is invalid, initializes an empty metadata dictionary.
+        """
         if self.metadata_file.exists():
             try:
                 with self.metadata_file.open() as f:
@@ -103,7 +115,10 @@ class IconLibrary(ABC):
                 self.metadata = {}
 
     def _save_metadata(self) -> None:
-        """Save metadata to cache."""
+        """Save icon metadata to the cache file.
+
+        Serializes the metadata dictionary to JSON format and writes it to the metadata file.
+        """
         data = {
             k: v.__dict__ if isinstance(v, IconMetadata) else v for k, v in self.metadata.items()
         }
@@ -138,7 +153,10 @@ class IconLibrary(ABC):
         return None
 
     def clear_cache(self) -> None:
-        """Clear all cached icons."""
+        """Clear all cached icons and metadata.
+
+        Removes the cache directory and recreates it, effectively resetting the cache.
+        """
         if self.cache_dir.exists():
             shutil.rmtree(self.cache_dir)
             self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -158,7 +176,11 @@ class IconifyLibrary(IconLibrary):
     BASE_URL = ICONIFY_BASE_URL
 
     def get_library_name(self) -> str:
-        """Get the library name."""
+        """Get the library name.
+
+        Returns:
+            The name of this icon library ("Iconify")
+        """
         return "Iconify"
 
     def search_icons(self, query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[IconMetadata]:
@@ -173,7 +195,7 @@ class IconifyLibrary(IconLibrary):
         """
         # Iconify's search endpoint
         url = f"{self.BASE_URL}/search"
-        params = {"query": query, "limit": limit, "prefixes": ""}
+        params: dict[str, str | int] = {"query": query, "limit": limit, "prefixes": ""}
 
         try:
             response = requests.get(url, params=params, timeout=API_TIMEOUT_SECONDS)
@@ -251,7 +273,10 @@ class IconifyLibrary(IconLibrary):
         """
         # Check cache first
         if self.is_cached(icon_name):
-            return self.get_cached_path(icon_name)
+            cached_path = self.get_cached_path(icon_name)
+            if cached_path is None:
+                raise RuntimeError(f"Failed to get cached path for {icon_name}")
+            return cached_path
 
         # Download from Iconify
         url = f"{self.BASE_URL}/{icon_name}.svg"
@@ -324,7 +349,11 @@ class SimpleIconsLibrary(IconLibrary):
     CDN_URL = SIMPLE_ICONS_CDN_URL
 
     def get_library_name(self) -> str:
-        """Get the library name."""
+        """Get the library name.
+
+        Returns:
+            The name of this icon library ("Simple Icons")
+        """
         return "Simple Icons"
 
     def search_icons(self, query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[IconMetadata]:
@@ -389,7 +418,10 @@ class SimpleIconsLibrary(IconLibrary):
         """
         # Check cache
         if self.is_cached(icon_name):
-            return self.get_cached_path(icon_name)
+            cached_path = self.get_cached_path(icon_name)
+            if cached_path is None:
+                raise RuntimeError(f"Failed to get cached path for {icon_name}")
+            return cached_path
 
         # Download from CDN
         url = f"{self.CDN_URL}/{icon_name}"
@@ -450,7 +482,7 @@ class SimpleIconsLibrary(IconLibrary):
 class IconLibraryManager:
     """Manager for multiple icon libraries."""
 
-    def __init__(self, base_cache_dir: Path):
+    def __init__(self, base_cache_dir: Path) -> None:
         """Initialize the icon library manager.
 
         Args:
@@ -484,10 +516,10 @@ class IconLibraryManager:
                 if icons:
                     results[name] = icons
             except IconSearchError as e:
-                print(f"Search error in {name}: {e}")
+                logger.warning(f"Search error in {name}: {e}")
                 results[name] = []
             except Exception as e:
-                print(f"Unexpected error searching {name}: {e}")
+                logger.error(f"Unexpected error searching {name}: {e}", exc_info=True)
                 results[name] = []
 
         return results
@@ -507,16 +539,16 @@ class IconLibraryManager:
         """
         library = self.libraries.get(library_name)
         if not library:
-            print(f"Unknown library: {library_name}")
+            logger.warning(f"Unknown library: {library_name}")
             return None
 
         try:
             return library.download_icon(icon_name, size)
         except IconDownloadError as e:
-            print(f"Download error: {e}")
+            logger.error(f"Download error: {e}", exc_info=True)
             return None
         except Exception as e:
-            print(f"Unexpected error downloading icon: {e}")
+            logger.error(f"Unexpected error downloading icon: {e}", exc_info=True)
             return None
 
     def get_available_libraries(self) -> list[str]:
@@ -528,6 +560,9 @@ class IconLibraryManager:
         return list(self.libraries.keys())
 
     def clear_all_caches(self) -> None:
-        """Clear all icon caches."""
+        """Clear all icon caches for all managed libraries.
+
+        Iterates through all registered icon libraries and clears their individual caches.
+        """
         for library in self.libraries.values():
             library.clear_cache()
